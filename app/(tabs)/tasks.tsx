@@ -17,11 +17,6 @@ export default function TasksScreen() {
         <Ionicons name="checkmark-circle-outline" size={64} color="#B0B8C7" />
         <Text style={styles.emptyText}>No tasks yet. Add one above!</Text>
       </View>
-      <View style={styles.menuButtonWrapper}>
-        <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.menuButtonText}>MENU</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -35,7 +30,4 @@ const styles = StyleSheet.create({
   addButton: { backgroundColor: '#3478F6', borderRadius: 24, padding: 8 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyText: { fontSize: 18, color: '#6C7A93', marginTop: 16 },
-  menuButtonWrapper: { position: 'absolute', left: 16, top: 80, zIndex: 2 },
-  menuButton: { backgroundColor: '#FF9C42', borderRadius: 16, paddingHorizontal: 18, paddingVertical: 10, elevation: 2 },
-  menuButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
 }); 

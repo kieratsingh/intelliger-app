@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function AnalyticsScreen() {
   return (
@@ -74,11 +74,6 @@ export default function AnalyticsScreen() {
           </View>
         </View>
       </ScrollView>
-      <View style={styles.menuButtonWrapper}>
-        <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.menuButtonText}>MENU</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -100,7 +95,4 @@ const styles = StyleSheet.create({
   insightBox: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginHorizontal: 24, marginBottom: 12, elevation: 1 },
   insightTitle: { fontSize: 16, fontWeight: 'bold', color: '#222' },
   insightText: { fontSize: 14, color: '#6C7A93' },
-  menuButtonWrapper: { position: 'absolute', left: 16, top: 80, zIndex: 2 },
-  menuButton: { backgroundColor: '#FF9C42', borderRadius: 16, paddingHorizontal: 18, paddingVertical: 10, elevation: 2 },
-  menuButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
 }); 
