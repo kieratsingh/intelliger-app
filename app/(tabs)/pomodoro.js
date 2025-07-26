@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BlurView } from 'expo-blur';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -368,7 +369,7 @@ export default function PomodoroScreen() {
       <View style={styles.centerContent}>
         {currentPhase === 'activeRecall' ? (
           // Active Recall UI
-          <View style={styles.activeRecallContainer}>
+          <BlurView intensity={40} tint="light" style={styles.activeRecallContainer}>
             {settings.activeRecallTimed && (
               <View style={styles.activeRecallTimer}>
                 <Text style={styles.activeRecallTimerText}>{formatTime(currentTime)}</Text>
@@ -392,7 +393,7 @@ export default function PomodoroScreen() {
                 <Text style={styles.submitButtonText}>Submit Summary</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </BlurView>
         ) : (
           // Regular Timer UI
           <>
@@ -769,7 +770,7 @@ export default function PomodoroScreen() {
               })}
             </View>
             <View style={styles.statsContainer}>
-              <View style={[styles.statBlock, styles.statBlockPurple]}>
+              <BlurView intensity={40} tint="light" style={[styles.statBlock, styles.statBlockPurple]}>
                 <View style={[styles.statIconContainer, styles.statIconPurple]}>
                   <Ionicons name="checkmark-circle-outline" size={24} color="#7B2FF2" />
                 </View>
@@ -777,8 +778,8 @@ export default function PomodoroScreen() {
                   <Text style={styles.statValue}>{completedPomodoros}</Text>
                   <Text style={styles.statLabel}>Completed Pomodoros</Text>
                 </View>
-              </View>
-              <View style={[styles.statBlock, styles.statBlockTeal]}>
+              </BlurView>
+              <BlurView intensity={40} tint="light" style={[styles.statBlock, styles.statBlockTeal]}>
                 <View style={[styles.statIconContainer, styles.statIconTeal]}>
                   <Ionicons name="time-outline" size={24} color="#00E0B8" />
                 </View>
@@ -786,7 +787,7 @@ export default function PomodoroScreen() {
                   <Text style={styles.statValue}>{currentPhase.replace(/([A-Z])/g, ' $1').trim().replace(/^./, str => str.toUpperCase())}</Text>
                   <Text style={styles.statLabel}>Current Phase</Text>
                 </View>
-              </View>
+              </BlurView>
             </View>
           </ScrollView>
         </SafeAreaView>
