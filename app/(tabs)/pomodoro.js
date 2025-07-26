@@ -37,8 +37,12 @@ export default function PomodoroScreen() {
   const [showProgress, setShowProgress] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
   const [validationErrors, setValidationErrors] = useState({});
+  const [fluidProgress, setFluidProgress] = useState(0); // 0-1 for SVG arc
 
   const intervalRef = useRef(null);
+  const animationRef = useRef(null);
+  const animationStart = useRef(null);
+  const lastSecond = useRef(currentTime);
   const { tasks = [] } = React.useContext(tasksContext) || {};
   const [selectedTitle, setSelectedTitle] = useState('Work Time');
 
@@ -111,7 +115,36 @@ export default function PomodoroScreen() {
     setShowSettings(true);
   };
 
-  // Timer logic
+  // Fluid progress animation
+  useEffect(() => {
+    if (!isRunning) {
+      setFluidProgress((getPhaseDuration() - currentTime) / getPhaseDuration());
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      return;
+    }
+    let startTimestamp = null;
+    let prevTime = currentTime;
+    const totalDuration = getPhaseDuration();
+    function animate(ts) {
+      if (!startTimestamp) startTimestamp = ts;
+      if (!animationStart.current) animationStart.current = ts;
+      const elapsed = (ts - animationStart.current) / 1000;
+      let progress = (totalDuration - (prevTime - elapsed)) / totalDuration;
+      progress = Math.max(0, Math.min(1, progress));
+      setFluidProgress(progress);
+      if (isRunning && prevTime - elapsed > 0) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    }
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      animationStart.current = null;
+    };
+    // eslint-disable-next-line
+  }, [isRunning, currentPhase, currentTime]);
+
+  // Timer logic (update time every second)
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
@@ -128,7 +161,6 @@ export default function PomodoroScreen() {
         clearInterval(intervalRef.current);
       }
     }
-
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -283,8 +315,8 @@ export default function PomodoroScreen() {
   const STROKE_WIDTH = 10;
   const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-  const progressPercent = getProgressPercentage();
-  const progressStrokeDashoffset = CIRCUMFERENCE * (1 - progressPercent / 100);
+  const progressPercent = fluidProgress * 100;
+  const progressStrokeDashoffset = CIRCUMFERENCE * (1 - fluidProgress);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -528,7 +560,7 @@ export default function PomodoroScreen() {
               // Progress for the current step (0-1)
               let stepProgress = 0;
               if (isCurrent) {
-                stepProgress = progressPercent / 100;
+                stepProgress = fluidProgress;
               } else if (isCompleted) {
                 stepProgress = 1;
               }
