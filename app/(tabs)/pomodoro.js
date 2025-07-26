@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Svg, { Circle, G, Line } from 'react-native-svg';
 import { tasksContext } from './tasksContext';
 
 export default function PomodoroScreen() {
@@ -277,6 +278,14 @@ export default function PomodoroScreen() {
     return Math.max(0, idx);
   };
 
+  // Timer circle constants
+  const CIRCLE_SIZE = 260;
+  const STROKE_WIDTH = 10;
+  const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+  const progressPercent = getProgressPercentage();
+  const progressStrokeDashoffset = CIRCUMFERENCE * (1 - progressPercent / 100);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with Edit Button */}
@@ -293,10 +302,36 @@ export default function PomodoroScreen() {
         <Text style={styles.subtitle}>{completedPomodoros} pomodoros completed</Text>
         
         {/* Timer Circle with Progress */}
-        <View style={styles.timerCircle}>
-          <View style={[styles.progressArc, { transform: [{ rotate: `${getProgressPercentage() * 3.6 - 90}deg` }] }]} />
-          <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
-          <Text style={styles.timerSubText}>{formatTime(getPhaseDuration())}</Text>
+        <View style={styles.timerCircleWrap}>
+          <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.timerSvg}>
+            <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
+              {/* Background (gray) */}
+              <Circle
+                cx={CIRCLE_SIZE / 2}
+                cy={CIRCLE_SIZE / 2}
+                r={RADIUS}
+                stroke="#E5E8EF"
+                strokeWidth={STROKE_WIDTH}
+                fill="none"
+              />
+              {/* Progress (blue) */}
+              <Circle
+                cx={CIRCLE_SIZE / 2}
+                cy={CIRCLE_SIZE / 2}
+                r={RADIUS}
+                stroke="#3478F6"
+                strokeWidth={STROKE_WIDTH}
+                fill="none"
+                strokeDasharray={CIRCUMFERENCE}
+                strokeDashoffset={progressStrokeDashoffset}
+                strokeLinecap="round"
+              />
+            </G>
+          </Svg>
+          <View style={styles.timerTextWrap}>
+            <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
+            <Text style={styles.timerSubText}>{formatTime(getPhaseDuration())}</Text>
+          </View>
         </View>
 
         {/* Controls */}
@@ -490,11 +525,41 @@ export default function PomodoroScreen() {
               const isCompleted = idx < currentIdx;
               const isCurrent = idx === currentIdx;
               const isLast = idx === arr.length - 1;
+              // Progress for the current step (0-1)
+              let stepProgress = 0;
+              if (isCurrent) {
+                stepProgress = progressPercent / 100;
+              } else if (isCompleted) {
+                stepProgress = 1;
+              }
               return (
                 <View key={step.key} style={styles.timelineRow}>
                   <View style={styles.timelineIconCol}>
                     {/* Vertical line above */}
-                    {idx > 0 && <View style={[styles.timelineLine, { backgroundColor: isCompleted ? '#3478F6' : '#E5E8EF' }]} />}
+                    {idx > 0 && (
+                      <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
+                        <Line
+                          x1={2}
+                          y1={0}
+                          x2={2}
+                          y2={32}
+                          stroke={stepProgress > 0 ? '#3478F6' : '#E5E8EF'}
+                          strokeWidth={4}
+                          strokeLinecap="round"
+                        />
+                        {isCurrent && stepProgress > 0 && (
+                          <Line
+                            x1={2}
+                            y1={0}
+                            x2={2}
+                            y2={32 * stepProgress}
+                            stroke="#3478F6"
+                            strokeWidth={4}
+                            strokeLinecap="round"
+                          />
+                        )}
+                      </Svg>
+                    )}
                     {/* Step icon */}
                     <View style={[styles.timelineIconWrap, isCurrent && styles.timelineIconCurrentWrap]}>
                       {isCompleted ? (
@@ -508,7 +573,30 @@ export default function PomodoroScreen() {
                       )}
                     </View>
                     {/* Vertical line below */}
-                    {!isLast && <View style={[styles.timelineLine, { backgroundColor: idx < currentIdx ? '#3478F6' : '#E5E8EF' }]} />}
+                    {!isLast && (
+                      <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
+                        <Line
+                          x1={2}
+                          y1={0}
+                          x2={2}
+                          y2={32}
+                          stroke={isCompleted ? '#3478F6' : '#E5E8EF'}
+                          strokeWidth={4}
+                          strokeLinecap="round"
+                        />
+                        {isCurrent && stepProgress > 0 && (
+                          <Line
+                            x1={2}
+                            y1={0}
+                            x2={2}
+                            y2={32 * stepProgress}
+                            stroke="#3478F6"
+                            strokeWidth={4}
+                            strokeLinecap="round"
+                          />
+                        )}
+                      </Svg>
+                    )}
                   </View>
                   <View style={styles.timelineLabelCol}>
                     <Text style={[styles.timelineLabel, isCurrent && styles.timelineLabelCurrent]}>{step.label}</Text>
@@ -540,31 +628,39 @@ const styles = StyleSheet.create({
   centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: -60 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#222', marginBottom: 4 },
   subtitle: { fontSize: 16, color: '#6C7A93', marginBottom: 18 },
-  timerCircle: { 
-    width: 260, 
-    height: 260, 
-    borderRadius: 130, 
-    borderWidth: 10, 
-    borderColor: '#E5E8EF', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    marginBottom: 24, 
-    borderStyle: 'solid',
-    position: 'relative'
-  },
-  progressArc: {
-    position: 'absolute',
+  timerCircle: {
     width: 260,
     height: 260,
     borderRadius: 130,
-    borderWidth: 10,
-    borderColor: '#3478F6',
-    borderTopColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    position: 'relative',
   },
-  timerText: { fontSize: 54, fontWeight: '600', color: '#222' },
-  timerSubText: { fontSize: 20, color: '#6C7A93', marginTop: -8 },
+  timerCircleWrap: {
+    width: 260,
+    height: 260,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    position: 'relative',
+  },
+  timerSvg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  timerTextWrap: {
+    width: 260,
+    height: 260,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  timerText: { fontSize: 64, fontWeight: 'bold', color: '#222', textAlign: 'center' },
+  timerSubText: { fontSize: 24, color: '#6C7A93', marginTop: -8, textAlign: 'center' },
   controlsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 18 },
   controlButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#F0F2F7', alignItems: 'center', justifyContent: 'center', marginHorizontal: 12 },
   pauseButton: { backgroundColor: '#3478F6' },
