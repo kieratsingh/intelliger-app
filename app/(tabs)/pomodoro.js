@@ -13,7 +13,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import Svg, { Circle, G, Line } from 'react-native-svg';
+import ConfettiCannon from 'react-native-confetti-cannon';
+import Svg, { Circle, Defs, G, Line, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
 import { tasksContext } from './tasksContext';
 
 export default function PomodoroScreen() {
@@ -42,6 +43,7 @@ export default function PomodoroScreen() {
   const [fluidProgress, setFluidProgress] = useState(0); // 0-1 for SVG arc
   const [activeRecallSummary, setActiveRecallSummary] = useState('');
   const [activeRecallTopic, setActiveRecallTopic] = useState('your recent work');
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const intervalRef = useRef(null);
   const animationRef = useRef(null);
@@ -336,6 +338,22 @@ export default function PomodoroScreen() {
   const progressPercent = fluidProgress * 100;
   const progressStrokeDashoffset = CIRCUMFERENCE * (1 - fluidProgress);
 
+  // Gradient colors for the progress ring
+  const GRADIENT_ID = 'progressGradient';
+  const GRADIENT_COLORS = [
+    { offset: '0%', color: '#3478F6' }, // blue
+    { offset: '50%', color: '#1E9FD8' }, // lighter blue
+    { offset: '100%', color: '#00E0B8' }, // teal
+  ];
+
+  // Show confetti on cycle complete
+  useEffect(() => {
+    if (completedPomodoros > 0 && pomodoroCount === 0 && currentPhase === 'pomodoro') {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3500);
+    }
+  }, [completedPomodoros, pomodoroCount, currentPhase]);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with Edit Button */}
@@ -381,9 +399,16 @@ export default function PomodoroScreen() {
             <Text style={styles.title}>{getPhaseTitle()}</Text>
             <Text style={styles.subtitle}>{completedPomodoros} pomodoros completed</Text>
             
-            {/* Timer Circle with Progress */}
+            {/* Timer Circle with Gradient Progress */}
             <View style={styles.timerCircleWrap}>
               <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.timerSvg}>
+                <Defs>
+                  <SvgLinearGradient id={GRADIENT_ID} x1="0%" y1="0%" x2="100%" y2="0%">
+                    {GRADIENT_COLORS.map((stop, idx) => (
+                      <Stop key={idx} offset={stop.offset} stopColor={stop.color} />
+                    ))}
+                  </SvgLinearGradient>
+                </Defs>
                 <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
                   {/* Background (gray) */}
                   <Circle
@@ -394,17 +419,18 @@ export default function PomodoroScreen() {
                     strokeWidth={STROKE_WIDTH}
                     fill="none"
                   />
-                  {/* Progress (blue) */}
+                  {/* Progress (gradient) */}
                   <Circle
                     cx={CIRCLE_SIZE / 2}
                     cy={CIRCLE_SIZE / 2}
                     r={RADIUS}
-                    stroke="#3478F6"
+                    stroke={`url(#${GRADIENT_ID})`}
                     strokeWidth={STROKE_WIDTH}
                     fill="none"
                     strokeDasharray={CIRCUMFERENCE}
                     strokeDashoffset={progressStrokeDashoffset}
                     strokeLinecap="round"
+                    style={{ shadowColor: '#7B2FF2', shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 }}
                   />
                 </G>
               </Svg>
@@ -412,6 +438,17 @@ export default function PomodoroScreen() {
                 <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
                 <Text style={styles.timerSubText}>{formatTime(getPhaseDuration())}</Text>
               </View>
+              {showConfetti && (
+                <ConfettiCannon
+                  count={80}
+                  origin={{ x: CIRCLE_SIZE / 2, y: 0 }}
+                  fadeOut
+                  fallSpeed={2500}
+                  explosionSpeed={500}
+                  colors={["#3478F6", "#7B2FF2", "#F357A8", "#FFD600", "#00E0B8"]}
+                  autoStart
+                />
+              )}
             </View>
 
             {/* Controls */}
@@ -769,6 +806,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 6,
   },
   timerSvg: {
     position: 'absolute',
@@ -787,7 +829,7 @@ const styles = StyleSheet.create({
   timerText: { fontSize: 64, fontWeight: 'bold', color: '#222', textAlign: 'center' },
   timerSubText: { fontSize: 24, color: '#6C7A93', marginTop: -8, textAlign: 'center' },
   controlsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 18 },
-  controlButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#F0F2F7', alignItems: 'center', justifyContent: 'center', marginHorizontal: 12 },
+  controlButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#F0F2F7', alignItems: 'center', justifyContent: 'center', marginHorizontal: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3 },
   pauseButton: { backgroundColor: '#3478F6' },
   statusText: { fontSize: 16, color: '#6C7A93', textAlign: 'center' },
   
@@ -840,12 +882,12 @@ const styles = StyleSheet.create({
   timelineRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
   timelineIconCol: { alignItems: 'center', width: 36 },
   timelineIconWrap: { backgroundColor: '#fff', borderRadius: 18, width: 36, height: 36, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  timelineIconCurrentWrap: { borderWidth: 2, borderColor: '#3478F6', backgroundColor: '#E5E8EF' },
-  timelineCurrentCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#3478F6', alignItems: 'center', justifyContent: 'center' },
+  timelineIconCurrentWrap: { borderWidth: 2, borderColor: '#F357A8', backgroundColor: '#E5E8EF' },
+  timelineCurrentCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#F357A8', alignItems: 'center', justifyContent: 'center' },
   timelineLine: { width: 4, height: 16, backgroundColor: '#E5E8EF', alignSelf: 'center', borderRadius: 2 },
   timelineLabelCol: { justifyContent: 'center', marginLeft: 12 },
   timelineLabel: { fontSize: 16, color: '#6C7A93' },
-  timelineLabelCurrent: { color: '#3478F6', fontWeight: 'bold' },
+  timelineLabelCurrent: { color: '#F357A8', fontWeight: 'bold' },
 
   // Active Recall Styles
   activeRecallContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
@@ -863,7 +905,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   summaryTitle: { fontSize: 18, color: '#6C7A93', textAlign: 'center', marginBottom: 4 },
-  summaryTopic: { fontSize: 20, fontWeight: 'bold', color: '#3478F6', textAlign: 'center', marginBottom: 24 },
+  summaryTopic: { fontSize: 20, fontWeight: 'bold', color: '#F357A8', textAlign: 'center', marginBottom: 24 },
   summaryInput: { 
     backgroundColor: '#F8F9FB', 
     borderRadius: 12, 
@@ -877,15 +919,15 @@ const styles = StyleSheet.create({
   },
   wordCount: { fontSize: 14, color: '#6C7A93', textAlign: 'right', marginTop: 8, marginBottom: 16 },
   submitButton: { 
-    backgroundColor: '#3478F6', 
+    backgroundColor: '#7B2FF2',
     borderRadius: 12, 
     paddingVertical: 16, 
     alignItems: 'center',
-    shadowColor: '#3478F6',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 6,
   },
-  submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 },
 }); 
