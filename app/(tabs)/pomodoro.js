@@ -23,7 +23,9 @@ export default function PomodoroScreen() {
     shortBreakDuration: 5,
     longBreakDuration: 15,
     pomodorosUntilLongBreak: 4,
-    aiAidedActiveRecall: false
+    aiAidedActiveRecall: false,
+    activeRecallTimed: true,
+    activeRecallDuration: 10
   });
 
   // Timer state
@@ -38,6 +40,8 @@ export default function PomodoroScreen() {
   const [tempSettings, setTempSettings] = useState(settings);
   const [validationErrors, setValidationErrors] = useState({});
   const [fluidProgress, setFluidProgress] = useState(0); // 0-1 for SVG arc
+  const [activeRecallSummary, setActiveRecallSummary] = useState('');
+  const [activeRecallTopic, setActiveRecallTopic] = useState('your recent work');
 
   const intervalRef = useRef(null);
   const animationRef = useRef(null);
@@ -117,7 +121,7 @@ export default function PomodoroScreen() {
 
   // Fluid progress animation
   useEffect(() => {
-    if (!isRunning) {
+    if (!isRunning || currentPhase === 'activeRecall') {
       setFluidProgress((getPhaseDuration() - currentTime) / getPhaseDuration());
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       return;
@@ -146,7 +150,7 @@ export default function PomodoroScreen() {
 
   // Timer logic (update time every second)
   useEffect(() => {
-    if (isRunning) {
+    if (isRunning && currentPhase !== 'activeRecall') {
       intervalRef.current = setInterval(() => {
         setCurrentTime((prevTime) => {
           if (prevTime <= 1) {
@@ -177,7 +181,7 @@ export default function PomodoroScreen() {
       case 'longBreak':
         return settings.longBreakDuration * 60;
       case 'activeRecall':
-        return 10 * 60; // 10 minutes for active recall
+        return settings.activeRecallTimed ? settings.activeRecallDuration * 60 : 0;
       default:
         return settings.pomodoroDuration * 60;
     }
@@ -200,6 +204,8 @@ export default function PomodoroScreen() {
     } else if (currentPhase === 'longBreak') {
       if (settings.aiAidedActiveRecall) {
         setCurrentPhase('activeRecall');
+        setActiveRecallSummary('');
+        setActiveRecallTopic('your recent work');
       } else {
         setCurrentPhase('pomodoro');
         setPomodoroCount(0);
@@ -207,6 +213,19 @@ export default function PomodoroScreen() {
     } else if (currentPhase === 'activeRecall') {
       setCurrentPhase('pomodoro');
       setPomodoroCount(0);
+    }
+  };
+
+  const handleActiveRecallSubmit = () => {
+    if (activeRecallSummary.trim()) {
+      // Here you could save the summary or send it to an AI service
+      Alert.alert('Summary Submitted!', 'Great job on your active recall session!');
+      setActiveRecallSummary('');
+      // Move to next phase
+      setCurrentPhase('pomodoro');
+      setPomodoroCount(0);
+    } else {
+      Alert.alert('Empty Summary', 'Please enter a summary before submitting.');
     }
   };
 
@@ -330,58 +349,90 @@ export default function PomodoroScreen() {
 
       {/* Main Timer Content */}
       <View style={styles.centerContent}>
-        <Text style={styles.title}>{getPhaseTitle()}</Text>
-        <Text style={styles.subtitle}>{completedPomodoros} pomodoros completed</Text>
-        
-        {/* Timer Circle with Progress */}
-        <View style={styles.timerCircleWrap}>
-          <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.timerSvg}>
-            <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
-              {/* Background (gray) */}
-              <Circle
-                cx={CIRCLE_SIZE / 2}
-                cy={CIRCLE_SIZE / 2}
-                r={RADIUS}
-                stroke="#E5E8EF"
-                strokeWidth={STROKE_WIDTH}
-                fill="none"
+        {currentPhase === 'activeRecall' ? (
+          // Active Recall UI
+          <View style={styles.activeRecallContainer}>
+            {settings.activeRecallTimed && (
+              <View style={styles.activeRecallTimer}>
+                <Text style={styles.activeRecallTimerText}>{formatTime(currentTime)}</Text>
+              </View>
+            )}
+            <View style={styles.summaryContainer}>
+              <Text style={styles.summaryTitle}>Enter 50-word summary on</Text>
+              <Text style={styles.summaryTopic}>{activeRecallTopic}</Text>
+              <TextInput
+                style={styles.summaryInput}
+                value={activeRecallSummary}
+                onChangeText={setActiveRecallSummary}
+                placeholder="Type your summary here..."
+                placeholderTextColor="#B0B8C7"
+                multiline
+                numberOfLines={4}
+                maxLength={200}
               />
-              {/* Progress (blue) */}
-              <Circle
-                cx={CIRCLE_SIZE / 2}
-                cy={CIRCLE_SIZE / 2}
-                r={RADIUS}
-                stroke="#3478F6"
-                strokeWidth={STROKE_WIDTH}
-                fill="none"
-                strokeDasharray={CIRCUMFERENCE}
-                strokeDashoffset={progressStrokeDashoffset}
-                strokeLinecap="round"
-              />
-            </G>
-          </Svg>
-          <View style={styles.timerTextWrap}>
-            <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
-            <Text style={styles.timerSubText}>{formatTime(getPhaseDuration())}</Text>
+              <Text style={styles.wordCount}>{activeRecallSummary.length}/200 characters</Text>
+              <TouchableOpacity style={styles.submitButton} onPress={handleActiveRecallSubmit}>
+                <Text style={styles.submitButtonText}>Submit Summary</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        ) : (
+          // Regular Timer UI
+          <>
+            <Text style={styles.title}>{getPhaseTitle()}</Text>
+            <Text style={styles.subtitle}>{completedPomodoros} pomodoros completed</Text>
+            
+            {/* Timer Circle with Progress */}
+            <View style={styles.timerCircleWrap}>
+              <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.timerSvg}>
+                <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
+                  {/* Background (gray) */}
+                  <Circle
+                    cx={CIRCLE_SIZE / 2}
+                    cy={CIRCLE_SIZE / 2}
+                    r={RADIUS}
+                    stroke="#E5E8EF"
+                    strokeWidth={STROKE_WIDTH}
+                    fill="none"
+                  />
+                  {/* Progress (blue) */}
+                  <Circle
+                    cx={CIRCLE_SIZE / 2}
+                    cy={CIRCLE_SIZE / 2}
+                    r={RADIUS}
+                    stroke="#3478F6"
+                    strokeWidth={STROKE_WIDTH}
+                    fill="none"
+                    strokeDasharray={CIRCUMFERENCE}
+                    strokeDashoffset={progressStrokeDashoffset}
+                    strokeLinecap="round"
+                  />
+                </G>
+              </Svg>
+              <View style={styles.timerTextWrap}>
+                <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
+                <Text style={styles.timerSubText}>{formatTime(getPhaseDuration())}</Text>
+              </View>
+            </View>
 
-        {/* Controls */}
-        <View style={styles.controlsRow}>
-          <TouchableOpacity style={styles.controlButton} onPress={() => setShowResetOptions(true)}>
-            <Ionicons name="refresh" size={28} color="#6C7A93" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.controlButton, isRunning && styles.pauseButton]} onPress={toggleTimer}>
-            <Ionicons name={isRunning ? "pause" : "play"} size={32} color={isRunning ? "#fff" : "#6C7A93"} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.controlButton} onPress={() => setShowProgress(true)}>
-            <Ionicons name="list" size={28} color="#6C7A93" />
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={styles.statusText}>
-          {isRunning ? 'Timer is running' : 'Timer is paused'}
-        </Text>
+            {/* Controls */}
+            <View style={styles.controlsRow}>
+              <TouchableOpacity style={styles.controlButton} onPress={() => setShowResetOptions(true)}>
+                <Ionicons name="refresh" size={28} color="#6C7A93" />
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.controlButton, isRunning && styles.pauseButton]} onPress={toggleTimer}>
+                <Ionicons name={isRunning ? "pause" : "play"} size={32} color={isRunning ? "#fff" : "#6C7A93"} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.controlButton} onPress={() => setShowProgress(true)}>
+                <Ionicons name="list" size={28} color="#6C7A93" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.statusText}>
+              {isRunning ? 'Timer is running' : 'Timer is paused'}
+            </Text>
+          </>
+        )}
       </View>
 
       {/* Settings Modal */}
@@ -505,6 +556,49 @@ export default function PomodoroScreen() {
                 />
               </View>
             </View>
+
+            {tempSettings.aiAidedActiveRecall && (
+              <>
+                <View style={styles.settingItem}>
+                  <View style={styles.switchContainer}>
+                    <View style={styles.switchLabelContainer}>
+                      <Text style={styles.settingLabel}>Timed Active Recall</Text>
+                    </View>
+                    <Switch
+                      value={tempSettings.activeRecallTimed}
+                      onValueChange={(value) => setTempSettings(prev => ({ ...prev, activeRecallTimed: value }))}
+                      trackColor={{ false: "#E5E8EF", true: "#3478F6" }}
+                      thumbColor="#fff"
+                    />
+                  </View>
+                </View>
+
+                {tempSettings.activeRecallTimed && (
+                  <View style={styles.settingItem}>
+                    <Text style={styles.settingLabel}>Active Recall Duration (minutes)</Text>
+                    <TextInput
+                      style={[styles.settingInput, validationErrors.activeRecallDuration && styles.errorInput]}
+                      value={tempSettings.activeRecallDuration ? tempSettings.activeRecallDuration.toString() : ''}
+                      onChangeText={(text) => {
+                        const value = text === '' ? '' : parseInt(text) || '';
+                        setTempSettings(prev => ({ ...prev, activeRecallDuration: value }));
+                        if (validationErrors.activeRecallDuration) {
+                          setValidationErrors(prev => ({ ...prev, activeRecallDuration: false }));
+                        }
+                      }}
+                      keyboardType="numeric"
+                      placeholder="10"
+                    />
+                    {validationErrors.activeRecallDuration && (
+                      <View style={styles.errorContainer}>
+                        <Ionicons name="alert-circle" size={16} color="#FF3B30" />
+                        <Text style={styles.errorText}>Required</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </>
+            )}
           </ScrollView>
           
           {/* Action Buttons */}
@@ -753,4 +847,46 @@ const styles = StyleSheet.create({
   timelineLabelCol: { justifyContent: 'center', marginLeft: 12 },
   timelineLabel: { fontSize: 16, color: '#6C7A93' },
   timelineLabelCurrent: { color: '#3478F6', fontWeight: 'bold' },
+
+  // Active Recall Styles
+  activeRecallContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  activeRecallTimer: { marginBottom: 32 },
+  activeRecallTimerText: { fontSize: 32, fontWeight: 'bold', color: '#3478F6', textAlign: 'center' },
+  summaryContainer: { 
+    backgroundColor: '#fff', 
+    borderRadius: 20, 
+    padding: 24, 
+    width: '100%', 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  summaryTitle: { fontSize: 18, color: '#6C7A93', textAlign: 'center', marginBottom: 4 },
+  summaryTopic: { fontSize: 20, fontWeight: 'bold', color: '#3478F6', textAlign: 'center', marginBottom: 24 },
+  summaryInput: { 
+    backgroundColor: '#F8F9FB', 
+    borderRadius: 12, 
+    padding: 16, 
+    fontSize: 16, 
+    color: '#222',
+    borderWidth: 1,
+    borderColor: '#E5E8EF',
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  wordCount: { fontSize: 14, color: '#6C7A93', textAlign: 'right', marginTop: 8, marginBottom: 16 },
+  submitButton: { 
+    backgroundColor: '#3478F6', 
+    borderRadius: 12, 
+    paddingVertical: 16, 
+    alignItems: 'center',
+    shadowColor: '#3478F6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 }); 
