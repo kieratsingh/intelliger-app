@@ -681,102 +681,104 @@ export default function PomodoroScreen() {
               <Ionicons name="close" size={24} color="#6C7A93" />
             </TouchableOpacity>
           </View>
-          <View style={styles.progressTimelineContainer}>
-            {buildProgressSteps().map((step, idx, arr) => {
-              const currentIdx = getCurrentStepIndex();
-              const isCompleted = idx < currentIdx;
-              const isCurrent = idx === currentIdx;
-              const isLast = idx === arr.length - 1;
-              // Progress for the current step (0-1)
-              let stepProgress = 0;
-              if (isCurrent) {
-                stepProgress = fluidProgress;
-              } else if (isCompleted) {
-                stepProgress = 1;
-              }
-              return (
-                <View key={step.key} style={styles.timelineRow}>
-                  <View style={styles.timelineIconCol}>
-                    {/* Vertical line above */}
-                    {idx > 0 && (
-                      <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
-                        <Line
-                          x1={2}
-                          y1={0}
-                          x2={2}
-                          y2={32}
-                          stroke={stepProgress > 0 ? '#3478F6' : '#E5E8EF'}
-                          strokeWidth={4}
-                          strokeLinecap="round"
-                        />
-                        {isCurrent && stepProgress > 0 && (
+          <ScrollView style={styles.progressScrollContainer} showsVerticalScrollIndicator={false}>
+            <View style={styles.progressTimelineContainer}>
+              {buildProgressSteps().map((step, idx, arr) => {
+                const currentIdx = getCurrentStepIndex();
+                const isCompleted = idx < currentIdx;
+                const isCurrent = idx === currentIdx;
+                const isLast = idx === arr.length - 1;
+                // Progress for the current step (0-1)
+                let stepProgress = 0;
+                if (isCurrent) {
+                  stepProgress = fluidProgress;
+                } else if (isCompleted) {
+                  stepProgress = 1;
+                }
+                return (
+                  <View key={step.key} style={styles.timelineRow}>
+                    <View style={styles.timelineIconCol}>
+                      {/* Vertical line above */}
+                      {idx > 0 && (
+                        <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
                           <Line
                             x1={2}
                             y1={0}
                             x2={2}
-                            y2={32 * stepProgress}
-                            stroke="#3478F6"
+                            y2={32}
+                            stroke={stepProgress > 0 ? '#3478F6' : '#E5E8EF'}
                             strokeWidth={4}
                             strokeLinecap="round"
                           />
+                          {isCurrent && stepProgress > 0 && (
+                            <Line
+                              x1={2}
+                              y1={0}
+                              x2={2}
+                              y2={32 * stepProgress}
+                              stroke="#3478F6"
+                              strokeWidth={4}
+                              strokeLinecap="round"
+                            />
+                          )}
+                        </Svg>
+                      )}
+                      {/* Step icon */}
+                      <View style={[styles.timelineIconWrap, isCurrent && styles.timelineIconCurrentWrap]}>
+                        {isCompleted ? (
+                          <Ionicons name="checkmark-circle" size={28} color="#3478F6" />
+                        ) : isCurrent ? (
+                          <View style={styles.timelineCurrentCircle}>
+                            <Ionicons name="ellipse" size={18} color="#fff" />
+                          </View>
+                        ) : (
+                          <Ionicons name="ellipse-outline" size={28} color="#B0B8C7" />
                         )}
-                      </Svg>
-                    )}
-                    {/* Step icon */}
-                    <View style={[styles.timelineIconWrap, isCurrent && styles.timelineIconCurrentWrap]}>
-                      {isCompleted ? (
-                        <Ionicons name="checkmark-circle" size={28} color="#3478F6" />
-                      ) : isCurrent ? (
-                        <View style={styles.timelineCurrentCircle}>
-                          <Ionicons name="ellipse" size={18} color="#fff" />
-                        </View>
-                      ) : (
-                        <Ionicons name="ellipse-outline" size={28} color="#B0B8C7" />
+                      </View>
+                      {/* Vertical line below */}
+                      {!isLast && (
+                        <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
+                          <Line
+                            x1={2}
+                            y1={0}
+                            x2={2}
+                            y2={32}
+                            stroke={isCompleted ? '#3478F6' : '#E5E8EF'}
+                            strokeWidth={4}
+                            strokeLinecap="round"
+                          />
+                          {isCurrent && stepProgress > 0 && (
+                            <Line
+                              x1={2}
+                              y1={0}
+                              x2={2}
+                              y2={32 * stepProgress}
+                              stroke="#3478F6"
+                              strokeWidth={4}
+                              strokeLinecap="round"
+                            />
+                          )}
+                        </Svg>
                       )}
                     </View>
-                    {/* Vertical line below */}
-                    {!isLast && (
-                      <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
-                        <Line
-                          x1={2}
-                          y1={0}
-                          x2={2}
-                          y2={32}
-                          stroke={isCompleted ? '#3478F6' : '#E5E8EF'}
-                          strokeWidth={4}
-                          strokeLinecap="round"
-                        />
-                        {isCurrent && stepProgress > 0 && (
-                          <Line
-                            x1={2}
-                            y1={0}
-                            x2={2}
-                            y2={32 * stepProgress}
-                            stroke="#3478F6"
-                            strokeWidth={4}
-                            strokeLinecap="round"
-                          />
-                        )}
-                      </Svg>
-                    )}
+                    <View style={styles.timelineLabelCol}>
+                      <Text style={[styles.timelineLabel, isCurrent && styles.timelineLabelCurrent]}>{step.label}</Text>
+                    </View>
                   </View>
-                  <View style={styles.timelineLabelCol}>
-                    <Text style={[styles.timelineLabel, isCurrent && styles.timelineLabelCurrent]}>{step.label}</Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Completed Pomodoros</Text>
-              <Text style={styles.statValue}>{completedPomodoros}</Text>
+                );
+              })}
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Current Phase</Text>
-              <Text style={styles.statValue}>{currentPhase.replace(/([A-Z])/g, ' $1').trim()}</Text>
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Completed Pomodoros</Text>
+                <Text style={styles.statValue}>{completedPomodoros}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Current Phase</Text>
+                <Text style={styles.statValue}>{currentPhase.replace(/([A-Z])/g, ' $1').trim()}</Text>
+              </View>
             </View>
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -878,16 +880,16 @@ const styles = StyleSheet.create({
   errorContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   errorText: { color: '#FF3B30', fontSize: 14, marginLeft: 4 },
   // Progress Timeline Styles
+  progressScrollContainer: { flex: 1 },
   progressTimelineContainer: { padding: 24, paddingTop: 32 },
   timelineRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
   timelineIconCol: { alignItems: 'center', width: 36 },
   timelineIconWrap: { backgroundColor: '#fff', borderRadius: 18, width: 36, height: 36, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  timelineIconCurrentWrap: { borderWidth: 2, borderColor: '#F357A8', backgroundColor: '#E5E8EF' },
-  timelineCurrentCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#F357A8', alignItems: 'center', justifyContent: 'center' },
-  timelineLine: { width: 4, height: 16, backgroundColor: '#E5E8EF', alignSelf: 'center', borderRadius: 2 },
+  timelineIconCurrentWrap: { borderWidth: 2, borderColor: '#3478F6', backgroundColor: '#E5E8EF' },
+  timelineCurrentCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#3478F6', alignItems: 'center', justifyContent: 'center' },
   timelineLabelCol: { justifyContent: 'center', marginLeft: 12 },
   timelineLabel: { fontSize: 16, color: '#6C7A93' },
-  timelineLabelCurrent: { color: '#F357A8', fontWeight: 'bold' },
+  timelineLabelCurrent: { color: '#3478F6', fontWeight: 'bold' },
 
   // Active Recall Styles
   activeRecallContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
