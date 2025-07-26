@@ -700,24 +700,24 @@ export default function PomodoroScreen() {
                     <View style={styles.timelineIconCol}>
                       {/* Vertical line above */}
                       {idx > 0 && (
-                        <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
+                        <Svg height={40} width={6} style={{ alignSelf: 'center' }}>
                           <Line
-                            x1={2}
+                            x1={3}
                             y1={0}
-                            x2={2}
-                            y2={32}
+                            x2={3}
+                            y2={40}
                             stroke={stepProgress > 0 ? '#3478F6' : '#E5E8EF'}
-                            strokeWidth={4}
+                            strokeWidth={6}
                             strokeLinecap="round"
                           />
                           {isCurrent && stepProgress > 0 && (
                             <Line
-                              x1={2}
+                              x1={3}
                               y1={0}
-                              x2={2}
-                              y2={32 * stepProgress}
+                              x2={3}
+                              y2={40 * stepProgress}
                               stroke="#3478F6"
-                              strokeWidth={4}
+                              strokeWidth={6}
                               strokeLinecap="round"
                             />
                           )}
@@ -737,24 +737,24 @@ export default function PomodoroScreen() {
                       </View>
                       {/* Vertical line below */}
                       {!isLast && (
-                        <Svg height={32} width={4} style={{ alignSelf: 'center' }}>
+                        <Svg height={40} width={6} style={{ alignSelf: 'center' }}>
                           <Line
-                            x1={2}
+                            x1={3}
                             y1={0}
-                            x2={2}
-                            y2={32}
+                            x2={3}
+                            y2={40}
                             stroke={isCompleted ? '#3478F6' : '#E5E8EF'}
-                            strokeWidth={4}
+                            strokeWidth={6}
                             strokeLinecap="round"
                           />
                           {isCurrent && stepProgress > 0 && (
                             <Line
-                              x1={2}
+                              x1={3}
                               y1={0}
-                              x2={2}
-                              y2={32 * stepProgress}
+                              x2={3}
+                              y2={40 * stepProgress}
                               stroke="#3478F6"
-                              strokeWidth={4}
+                              strokeWidth={6}
                               strokeLinecap="round"
                             />
                           )}
@@ -769,13 +769,23 @@ export default function PomodoroScreen() {
               })}
             </View>
             <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Completed Pomodoros</Text>
-                <Text style={styles.statValue}>{completedPomodoros}</Text>
+              <View style={[styles.statBlock, styles.statBlockPurple]}>
+                <View style={[styles.statIconContainer, styles.statIconPurple]}>
+                  <Ionicons name="checkmark-circle-outline" size={24} color="#7B2FF2" />
+                </View>
+                <View style={styles.statContent}>
+                  <Text style={styles.statValue}>{completedPomodoros}</Text>
+                  <Text style={styles.statLabel}>Completed Pomodoros</Text>
+                </View>
               </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Current Phase</Text>
-                <Text style={styles.statValue}>{currentPhase.replace(/([A-Z])/g, ' $1').trim()}</Text>
+              <View style={[styles.statBlock, styles.statBlockTeal]}>
+                <View style={[styles.statIconContainer, styles.statIconTeal]}>
+                  <Ionicons name="time-outline" size={24} color="#00E0B8" />
+                </View>
+                <View style={styles.statContent}>
+                  <Text style={styles.statValue}>{currentPhase.replace(/([A-Z])/g, ' $1').trim().replace(/^./, str => str.toUpperCase())}</Text>
+                  <Text style={styles.statLabel}>Current Phase</Text>
+                </View>
               </View>
             </View>
           </ScrollView>
@@ -860,10 +870,57 @@ const styles = StyleSheet.create({
   progressBar: { height: 8, backgroundColor: '#E5E8EF', borderRadius: 4, marginBottom: 8 },
   progressFill: { height: '100%', backgroundColor: '#3478F6', borderRadius: 4 },
   progressText: { fontSize: 16, color: '#6C7A93', textAlign: 'center' },
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between' },
-  statItem: { flex: 1, alignItems: 'center' },
-  statLabel: { fontSize: 14, color: '#6C7A93', marginBottom: 4 },
-  statValue: { fontSize: 18, fontWeight: 'bold', color: '#222' },
+  statsContainer: { 
+    flexDirection: 'column', 
+    alignItems: 'center',
+    paddingHorizontal: 24, 
+    paddingBottom: 24,
+    gap: 16
+  },
+  statBlock: { 
+    width: '100%',
+    backgroundColor: '#fff', 
+    borderRadius: 16, 
+    padding: 20, 
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 2,
+  },
+  statBlockBlue: {
+    borderColor: '#3478F6',
+  },
+  statBlockTeal: {
+    borderColor: '#00E0B8',
+  },
+  statBlockPurple: {
+    borderColor: '#7B2FF2',
+  },
+  statIconContainer: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    backgroundColor: '#F0F2F7', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginRight: 16
+  },
+  statIconBlue: {
+    backgroundColor: '#E6F0FF',
+  },
+  statIconTeal: {
+    backgroundColor: '#D1F7F2',
+  },
+  statIconPurple: {
+    backgroundColor: '#EDE6FF',
+  },
+  statContent: { flex: 1 },
+  statValue: { fontSize: 20, fontWeight: 'bold', color: '#222', marginBottom: 2 },
+  statLabel: { fontSize: 15, color: '#6C7A93' },
   
   // Save Button Styles
   saveButtonContainer: { padding: 24, borderTopWidth: 1, borderTopColor: '#E5E8EF' },
@@ -932,4 +989,56 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 },
+  // Stats Container Styles
+  statsContainer: { 
+    flexDirection: 'column', 
+    alignItems: 'center',
+    paddingHorizontal: 24, 
+    paddingBottom: 24,
+    gap: 16
+  },
+  statBlock: { 
+    width: '100%',
+    backgroundColor: '#fff', 
+    borderRadius: 16, 
+    padding: 20, 
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 2,
+  },
+  statBlockBlue: {
+    borderColor: '#3478F6',
+  },
+  statBlockTeal: {
+    borderColor: '#00E0B8',
+  },
+  statBlockPurple: {
+    borderColor: '#7B2FF2',
+  },
+  statIconContainer: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    backgroundColor: '#F0F2F7', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    marginRight: 16
+  },
+  statIconBlue: {
+    backgroundColor: '#E6F0FF',
+  },
+  statIconTeal: {
+    backgroundColor: '#D1F7F2',
+  },
+  statIconPurple: {
+    backgroundColor: '#EDE6FF',
+  },
+  statContent: { flex: 1 },
+  statValue: { fontSize: 20, fontWeight: 'bold', color: '#222', marginBottom: 2 },
+  statLabel: { fontSize: 15, color: '#6C7A93' },
 }); 
