@@ -104,8 +104,7 @@ export default function PomodoroScreen() {
 
     setValidationErrors({});
     setSettings(tempSettings);
-    // Reset cycle with new settings
-    setIsRunning(false);
+    setIsRunning(false); // Pause on new session
     setCurrentTime(tempSettings.pomodoroDuration * 60);
     setCurrentPhase('pomodoro');
     setPomodoroCount(0);
@@ -188,6 +187,7 @@ export default function PomodoroScreen() {
   };
 
   const handlePhaseComplete = () => {
+    setIsRunning(false); // Always pause on new phase
     if (currentPhase === 'pomodoro') {
       const newPomodoroCount = pomodoroCount + 1;
       setPomodoroCount(newPomodoroCount);
@@ -218,12 +218,11 @@ export default function PomodoroScreen() {
 
   const handleActiveRecallSubmit = () => {
     if (activeRecallSummary.trim()) {
-      // Here you could save the summary or send it to an AI service
       Alert.alert('Summary Submitted!', 'Great job on your active recall session!');
       setActiveRecallSummary('');
-      // Move to next phase
       setCurrentPhase('pomodoro');
       setPomodoroCount(0);
+      setIsRunning(false); // Pause on new session
     } else {
       Alert.alert('Empty Summary', 'Please enter a summary before submitting.');
     }
