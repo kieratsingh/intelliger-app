@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Image,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -357,447 +358,466 @@ export default function PomodoroScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with Edit Button */}
-      <View style={styles.headerRow}>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.editButton} onPress={openSettings}>
-          <Ionicons name="create-outline" size={28} color="#3478F6" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Timer Content */}
-      <View style={styles.centerContent}>
-        {currentPhase === 'activeRecall' ? (
-          // Active Recall UI
-          <BlurView intensity={40} tint="light" style={styles.activeRecallContainer}>
-            {settings.activeRecallTimed && (
-              <View style={styles.activeRecallTimer}>
-                <Text style={styles.activeRecallTimerText}>{formatTime(currentTime)}</Text>
-              </View>
-            )}
-            <View style={styles.summaryContainer}>
-              <Text style={styles.summaryTitle}>Enter 50-word summary on</Text>
-              <Text style={styles.summaryTopic}>{activeRecallTopic}</Text>
-              <TextInput
-                style={styles.summaryInput}
-                value={activeRecallSummary}
-                onChangeText={setActiveRecallSummary}
-                placeholder="Type your summary here..."
-                placeholderTextColor="#B0B8C7"
-                multiline
-                numberOfLines={4}
-                maxLength={200}
+      {/* Manually tiled cloth texture background for Android */}
+      <View style={styles.textureGrid} pointerEvents="none">
+        {[...Array(6)].map((_, row) => (
+          <View key={row} style={{ flexDirection: 'row' }}>
+            {[...Array(3)].map((_, col) => (
+              <Image
+                key={col}
+                source={require('../../assets/images/cloth-texture.png')}
+                style={{ width: '33.33%', height: 160, opacity: 0.13 }}
+                resizeMode="cover"
               />
-              <Text style={styles.wordCount}>{activeRecallSummary.length}/200 characters</Text>
-              <TouchableOpacity style={styles.submitButton} onPress={handleActiveRecallSubmit}>
-                <Text style={styles.submitButtonText}>Submit Summary</Text>
-              </TouchableOpacity>
-            </View>
-          </BlurView>
-        ) : (
-          // Regular Timer UI
-          <>
-            <Text style={styles.title}>{getPhaseTitle()}</Text>
-            <Text style={styles.subtitle}>{completedPomodoros} pomodoros completed</Text>
-            
-            {/* Timer Circle with Gradient Progress */}
-            <View style={styles.timerCircleWrap}>
-              <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.timerSvg}>
-                <Defs>
-                  <SvgLinearGradient id={GRADIENT_ID} x1="0%" y1="0%" x2="100%" y2="0%">
-                    {GRADIENT_COLORS.map((stop, idx) => (
-                      <Stop key={idx} offset={stop.offset} stopColor={stop.color} />
-                    ))}
-                  </SvgLinearGradient>
-                </Defs>
-                <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
-                  {/* Background (gray) */}
-                  <Circle
-                    cx={CIRCLE_SIZE / 2}
-                    cy={CIRCLE_SIZE / 2}
-                    r={RADIUS}
-                    stroke="#E5E8EF"
-                    strokeWidth={STROKE_WIDTH}
-                    fill="none"
-                  />
-                  {/* Progress (gradient) */}
-                  <Circle
-                    cx={CIRCLE_SIZE / 2}
-                    cy={CIRCLE_SIZE / 2}
-                    r={RADIUS}
-                    stroke={`url(#${GRADIENT_ID})`}
-                    strokeWidth={STROKE_WIDTH}
-                    fill="none"
-                    strokeDasharray={CIRCUMFERENCE}
-                    strokeDashoffset={progressStrokeDashoffset}
-                    strokeLinecap="round"
-                    style={{ shadowColor: '#7B2FF2', shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 }}
-                  />
-                </G>
-              </Svg>
-              <View style={styles.timerTextWrap}>
-                <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
-                <Text style={styles.timerSubText}>{formatTime(getPhaseDuration())}</Text>
-              </View>
-              {showConfetti && (
-                <ConfettiCannon
-                  count={80}
-                  origin={{ x: CIRCLE_SIZE / 2, y: 0 }}
-                  fadeOut
-                  fallSpeed={2500}
-                  explosionSpeed={500}
-                  colors={["#3478F6", "#7B2FF2", "#F357A8", "#FFD600", "#00E0B8"]}
-                  autoStart
-                />
-              )}
-            </View>
-
-            {/* Controls */}
-            <View style={styles.controlsRow}>
-              <TouchableOpacity style={styles.controlButton} onPress={() => setShowResetOptions(true)}>
-                <Ionicons name="refresh" size={28} color="#6C7A93" />
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.controlButton, isRunning && styles.pauseButton]} onPress={toggleTimer}>
-                <Ionicons name={isRunning ? "pause" : "play"} size={32} color={isRunning ? "#fff" : "#6C7A93"} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.controlButton} onPress={() => setShowProgress(true)}>
-                <Ionicons name="list" size={28} color="#6C7A93" />
-              </TouchableOpacity>
-            </View>
-            
-            <Text style={styles.statusText}>
-              {isRunning ? 'Timer is running' : 'Timer is paused'}
-            </Text>
-          </>
-        )}
-      </View>
-
-      {/* Settings Modal */}
-      <Modal
-        visible={showSettings}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Timer Settings</Text>
-            <TouchableOpacity onPress={() => setShowSettings(false)}>
-              <Ionicons name="close" size={24} color="#6C7A93" />
-            </TouchableOpacity>
+            ))}
           </View>
-          
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Pomodoro Duration (minutes)</Text>
-              <TextInput
-                style={[styles.settingInput, validationErrors.pomodoroDuration && styles.errorInput]}
-                value={tempSettings.pomodoroDuration ? tempSettings.pomodoroDuration.toString() : ''}
-                onChangeText={(text) => {
-                  const value = text === '' ? '' : parseInt(text) || '';
-                  setTempSettings(prev => ({ ...prev, pomodoroDuration: value }));
-                  if (validationErrors.pomodoroDuration) {
-                    setValidationErrors(prev => ({ ...prev, pomodoroDuration: false }));
-                  }
-                }}
-                keyboardType="numeric"
-                placeholder="25"
-              />
-              {validationErrors.pomodoroDuration && (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={16} color="#FF3B30" />
-                  <Text style={styles.errorText}>Required</Text>
+        ))}
+      </View>
+      {/* Main content */}
+      <View style={{ flex: 1 }}>
+        {/* Header with Edit Button */}
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity style={styles.editButton} onPress={openSettings}>
+            <Ionicons name="create-outline" size={28} color="#3478F6" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Main Timer Content */}
+        <View style={styles.centerContent}>
+          {currentPhase === 'activeRecall' ? (
+            // Active Recall UI
+            <BlurView intensity={40} tint="light" style={styles.activeRecallContainer}>
+              {settings.activeRecallTimed && (
+                <View style={styles.activeRecallTimer}>
+                  <Text style={styles.activeRecallTimerText}>{formatTime(currentTime)}</Text>
                 </View>
               )}
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Short Break Duration (minutes)</Text>
-              <TextInput
-                style={[styles.settingInput, validationErrors.shortBreakDuration && styles.errorInput]}
-                value={tempSettings.shortBreakDuration ? tempSettings.shortBreakDuration.toString() : ''}
-                onChangeText={(text) => {
-                  const value = text === '' ? '' : parseInt(text) || '';
-                  setTempSettings(prev => ({ ...prev, shortBreakDuration: value }));
-                  if (validationErrors.shortBreakDuration) {
-                    setValidationErrors(prev => ({ ...prev, shortBreakDuration: false }));
-                  }
-                }}
-                keyboardType="numeric"
-                placeholder="5"
-              />
-              {validationErrors.shortBreakDuration && (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={16} color="#FF3B30" />
-                  <Text style={styles.errorText}>Required</Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Long Break Duration (minutes)</Text>
-              <TextInput
-                style={[styles.settingInput, validationErrors.longBreakDuration && styles.errorInput]}
-                value={tempSettings.longBreakDuration ? tempSettings.longBreakDuration.toString() : ''}
-                onChangeText={(text) => {
-                  const value = text === '' ? '' : parseInt(text) || '';
-                  setTempSettings(prev => ({ ...prev, longBreakDuration: value }));
-                  if (validationErrors.longBreakDuration) {
-                    setValidationErrors(prev => ({ ...prev, longBreakDuration: false }));
-                  }
-                }}
-                keyboardType="numeric"
-                placeholder="15"
-              />
-              {validationErrors.longBreakDuration && (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={16} color="#FF3B30" />
-                  <Text style={styles.errorText}>Required</Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Pomodoros until Long Break</Text>
-              <TextInput
-                style={[styles.settingInput, validationErrors.pomodorosUntilLongBreak && styles.errorInput]}
-                value={tempSettings.pomodorosUntilLongBreak ? tempSettings.pomodorosUntilLongBreak.toString() : ''}
-                onChangeText={(text) => {
-                  const value = text === '' ? '' : parseInt(text) || '';
-                  setTempSettings(prev => ({ ...prev, pomodorosUntilLongBreak: value }));
-                  if (validationErrors.pomodorosUntilLongBreak) {
-                    setValidationErrors(prev => ({ ...prev, pomodorosUntilLongBreak: false }));
-                  }
-                }}
-                keyboardType="numeric"
-                placeholder="4"
-              />
-              {validationErrors.pomodorosUntilLongBreak && (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle" size={16} color="#FF3B30" />
-                  <Text style={styles.errorText}>Required</Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.settingItem}>
-              <View style={styles.switchContainer}>
-                <View style={styles.switchLabelContainer}>
-                  <Text style={styles.settingLabel}>AI-Aided Active Recall</Text>
-                  <Ionicons name="sparkles" size={16} color="#3478F6" style={{ marginLeft: 4 }} />
-                </View>
-                <Switch
-                  value={tempSettings.aiAidedActiveRecall}
-                  onValueChange={(value) => setTempSettings(prev => ({ ...prev, aiAidedActiveRecall: value }))}
-                  trackColor={{ false: "#E5E8EF", true: "#3478F6" }}
-                  thumbColor="#fff"
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryTitle}>Enter 50-word summary on</Text>
+                <Text style={styles.summaryTopic}>{activeRecallTopic}</Text>
+                <TextInput
+                  style={styles.summaryInput}
+                  value={activeRecallSummary}
+                  onChangeText={setActiveRecallSummary}
+                  placeholder="Type your summary here..."
+                  placeholderTextColor="#B0B8C7"
+                  multiline
+                  numberOfLines={4}
+                  maxLength={200}
                 />
+                <Text style={styles.wordCount}>{activeRecallSummary.length}/200 characters</Text>
+                <TouchableOpacity style={styles.submitButton} onPress={handleActiveRecallSubmit}>
+                  <Text style={styles.submitButtonText}>Submit Summary</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-
-            {tempSettings.aiAidedActiveRecall && (
-              <>
-                <View style={styles.settingItem}>
-                  <View style={styles.switchContainer}>
-                    <View style={styles.switchLabelContainer}>
-                      <Text style={styles.settingLabel}>Timed Active Recall</Text>
-                    </View>
-                    <Switch
-                      value={tempSettings.activeRecallTimed}
-                      onValueChange={(value) => setTempSettings(prev => ({ ...prev, activeRecallTimed: value }))}
-                      trackColor={{ false: "#E5E8EF", true: "#3478F6" }}
-                      thumbColor="#fff"
+            </BlurView>
+          ) : (
+            // Regular Timer UI
+            <>
+              <Text style={styles.title}>{getPhaseTitle()}</Text>
+              <Text style={styles.subtitle}>{completedPomodoros} pomodoros completed</Text>
+              
+              {/* Timer Circle with Gradient Progress */}
+              <View style={styles.timerCircleWrap}>
+                <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.timerSvg}>
+                  <Defs>
+                    <SvgLinearGradient id={GRADIENT_ID} x1="0%" y1="0%" x2="100%" y2="0%">
+                      {GRADIENT_COLORS.map((stop, idx) => (
+                        <Stop key={idx} offset={stop.offset} stopColor={stop.color} />
+                      ))}
+                    </SvgLinearGradient>
+                  </Defs>
+                  <G rotation="-90" origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}>
+                    {/* Background (gray) */}
+                    <Circle
+                      cx={CIRCLE_SIZE / 2}
+                      cy={CIRCLE_SIZE / 2}
+                      r={RADIUS}
+                      stroke="#E5E8EF"
+                      strokeWidth={STROKE_WIDTH}
+                      fill="none"
                     />
-                  </View>
+                    {/* Progress (gradient) */}
+                    <Circle
+                      cx={CIRCLE_SIZE / 2}
+                      cy={CIRCLE_SIZE / 2}
+                      r={RADIUS}
+                      stroke={`url(#${GRADIENT_ID})`}
+                      strokeWidth={STROKE_WIDTH}
+                      fill="none"
+                      strokeDasharray={CIRCUMFERENCE}
+                      strokeDashoffset={progressStrokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ shadowColor: '#7B2FF2', shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 }}
+                    />
+                  </G>
+                </Svg>
+                <View style={styles.timerTextWrap}>
+                  <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
+                  <Text style={styles.timerSubText}>{formatTime(getPhaseDuration())}</Text>
                 </View>
+                {showConfetti && (
+                  <ConfettiCannon
+                    count={80}
+                    origin={{ x: CIRCLE_SIZE / 2, y: 0 }}
+                    fadeOut
+                    fallSpeed={2500}
+                    explosionSpeed={500}
+                    colors={["#3478F6", "#7B2FF2", "#1E9FD8", "#FFD600", "#00E0B8"]}
+                    autoStart
+                  />
+                )}
+              </View>
 
-                {tempSettings.activeRecallTimed && (
-                  <View style={styles.settingItem}>
-                    <Text style={styles.settingLabel}>Active Recall Duration (minutes)</Text>
-                    <TextInput
-                      style={[styles.settingInput, validationErrors.activeRecallDuration && styles.errorInput]}
-                      value={tempSettings.activeRecallDuration ? tempSettings.activeRecallDuration.toString() : ''}
-                      onChangeText={(text) => {
-                        const value = text === '' ? '' : parseInt(text) || '';
-                        setTempSettings(prev => ({ ...prev, activeRecallDuration: value }));
-                        if (validationErrors.activeRecallDuration) {
-                          setValidationErrors(prev => ({ ...prev, activeRecallDuration: false }));
-                        }
-                      }}
-                      keyboardType="numeric"
-                      placeholder="10"
-                    />
-                    {validationErrors.activeRecallDuration && (
-                      <View style={styles.errorContainer}>
-                        <Ionicons name="alert-circle" size={16} color="#FF3B30" />
-                        <Text style={styles.errorText}>Required</Text>
-                      </View>
-                    )}
+              {/* Controls */}
+              <View style={styles.controlsRow}>
+                <TouchableOpacity style={styles.controlButton} onPress={() => setShowResetOptions(true)}>
+                  <Ionicons name="refresh" size={28} color="#6C7A93" />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.controlButton, isRunning && styles.pauseButton]} onPress={toggleTimer}>
+                  <Ionicons name={isRunning ? "pause" : "play"} size={32} color={isRunning ? "#fff" : "#6C7A93"} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.controlButton} onPress={() => setShowProgress(true)}>
+                  <Ionicons name="list" size={28} color="#6C7A93" />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.statusText}>
+                {isRunning ? 'Timer is running' : 'Timer is paused'}
+              </Text>
+            </>
+          )}
+        </View>
+
+        {/* Settings Modal */}
+        <Modal
+          visible={showSettings}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Timer Settings</Text>
+              <TouchableOpacity onPress={() => setShowSettings(false)}>
+                <Ionicons name="close" size={24} color="#6C7A93" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalContent}>
+              <View style={styles.settingItem}>
+                <Text style={styles.settingLabel}>Pomodoro Duration (minutes)</Text>
+                <TextInput
+                  style={[styles.settingInput, validationErrors.pomodoroDuration && styles.errorInput]}
+                  value={tempSettings.pomodoroDuration ? tempSettings.pomodoroDuration.toString() : ''}
+                  onChangeText={(text) => {
+                    const value = text === '' ? '' : parseInt(text) || '';
+                    setTempSettings(prev => ({ ...prev, pomodoroDuration: value }));
+                    if (validationErrors.pomodoroDuration) {
+                      setValidationErrors(prev => ({ ...prev, pomodoroDuration: false }));
+                    }
+                  }}
+                  keyboardType="numeric"
+                  placeholder="25"
+                />
+                {validationErrors.pomodoroDuration && (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={16} color="#FF3B30" />
+                    <Text style={styles.errorText}>Required</Text>
                   </View>
                 )}
-              </>
-            )}
-          </ScrollView>
-          
-          {/* Action Buttons */}
-          <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity style={styles.setDefaultButton} onPress={saveAsDefault}>
-              <Text style={styles.setDefaultButtonText}>Set as Default</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveSettings}>
-              <Text style={styles.saveButtonText}>Save Changes & Reset Cycle</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </Modal>
+              </View>
 
-      {/* Reset Options Modal */}
-      <Modal
-        visible={showResetOptions}
-        transparent
-        animationType="fade"
-      >
-        <TouchableOpacity style={styles.modalOverlay} onPress={() => setShowResetOptions(false)}>
-          <View style={styles.resetModal}>
-            <Text style={styles.resetModalTitle}>Reset Options</Text>
-            <TouchableOpacity style={styles.resetOption} onPress={resetSession}>
-              <Text style={styles.resetOptionText}>Reset This Session</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.resetOption} onPress={resetCycle}>
-              <Text style={styles.resetOptionText}>Reset Pomodoro Cycle</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+              <View style={styles.settingItem}>
+                <Text style={styles.settingLabel}>Short Break Duration (minutes)</Text>
+                <TextInput
+                  style={[styles.settingInput, validationErrors.shortBreakDuration && styles.errorInput]}
+                  value={tempSettings.shortBreakDuration ? tempSettings.shortBreakDuration.toString() : ''}
+                  onChangeText={(text) => {
+                    const value = text === '' ? '' : parseInt(text) || '';
+                    setTempSettings(prev => ({ ...prev, shortBreakDuration: value }));
+                    if (validationErrors.shortBreakDuration) {
+                      setValidationErrors(prev => ({ ...prev, shortBreakDuration: false }));
+                    }
+                  }}
+                  keyboardType="numeric"
+                  placeholder="5"
+                />
+                {validationErrors.shortBreakDuration && (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={16} color="#FF3B30" />
+                    <Text style={styles.errorText}>Required</Text>
+                  </View>
+                )}
+              </View>
 
-      {/* Progress Modal */}
-      <Modal
-        visible={showProgress}
-        transparent
-        animationType="slide"
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Pomodoro Progress</Text>
-            <TouchableOpacity onPress={() => setShowProgress(false)}>
-              <Ionicons name="close" size={24} color="#6C7A93" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.progressScrollContainer} showsVerticalScrollIndicator={false}>
-            <View style={styles.progressTimelineContainer}>
-              {buildProgressSteps().map((step, idx, arr) => {
-                const currentIdx = getCurrentStepIndex();
-                const isCompleted = idx < currentIdx;
-                const isCurrent = idx === currentIdx;
-                const isLast = idx === arr.length - 1;
-                // Progress for the current step (0-1)
-                let stepProgress = 0;
-                if (isCurrent) {
-                  stepProgress = fluidProgress;
-                } else if (isCompleted) {
-                  stepProgress = 1;
-                }
-                return (
-                  <View key={step.key} style={styles.timelineRow}>
-                    <View style={styles.timelineIconCol}>
-                      {/* Vertical line above */}
-                      {idx > 0 && (
-                        <Svg height={40} width={6} style={{ alignSelf: 'center' }}>
-                          <Line
-                            x1={3}
-                            y1={0}
-                            x2={3}
-                            y2={40}
-                            stroke={stepProgress > 0 ? '#3478F6' : '#E5E8EF'}
-                            strokeWidth={6}
-                            strokeLinecap="round"
-                          />
-                          {isCurrent && stepProgress > 0 && (
-                            <Line
-                              x1={3}
-                              y1={0}
-                              x2={3}
-                              y2={40 * stepProgress}
-                              stroke="#3478F6"
-                              strokeWidth={6}
-                              strokeLinecap="round"
-                            />
-                          )}
-                        </Svg>
-                      )}
-                      {/* Step icon */}
-                      <View style={[styles.timelineIconWrap, isCurrent && styles.timelineIconCurrentWrap]}>
-                        {isCompleted ? (
-                          <Ionicons name="checkmark-circle" size={28} color="#3478F6" />
-                        ) : isCurrent ? (
-                          <View style={styles.timelineCurrentCircle}>
-                            <Ionicons name="ellipse" size={18} color="#fff" />
-                          </View>
-                        ) : (
-                          <Ionicons name="ellipse-outline" size={28} color="#B0B8C7" />
-                        )}
+              <View style={styles.settingItem}>
+                <Text style={styles.settingLabel}>Long Break Duration (minutes)</Text>
+                <TextInput
+                  style={[styles.settingInput, validationErrors.longBreakDuration && styles.errorInput]}
+                  value={tempSettings.longBreakDuration ? tempSettings.longBreakDuration.toString() : ''}
+                  onChangeText={(text) => {
+                    const value = text === '' ? '' : parseInt(text) || '';
+                    setTempSettings(prev => ({ ...prev, longBreakDuration: value }));
+                    if (validationErrors.longBreakDuration) {
+                      setValidationErrors(prev => ({ ...prev, longBreakDuration: false }));
+                    }
+                  }}
+                  keyboardType="numeric"
+                  placeholder="15"
+                />
+                {validationErrors.longBreakDuration && (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={16} color="#FF3B30" />
+                    <Text style={styles.errorText}>Required</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.settingItem}>
+                <Text style={styles.settingLabel}>Pomodoros until Long Break</Text>
+                <TextInput
+                  style={[styles.settingInput, validationErrors.pomodorosUntilLongBreak && styles.errorInput]}
+                  value={tempSettings.pomodorosUntilLongBreak ? tempSettings.pomodorosUntilLongBreak.toString() : ''}
+                  onChangeText={(text) => {
+                    const value = text === '' ? '' : parseInt(text) || '';
+                    setTempSettings(prev => ({ ...prev, pomodorosUntilLongBreak: value }));
+                    if (validationErrors.pomodorosUntilLongBreak) {
+                      setValidationErrors(prev => ({ ...prev, pomodorosUntilLongBreak: false }));
+                    }
+                  }}
+                  keyboardType="numeric"
+                  placeholder="4"
+                />
+                {validationErrors.pomodorosUntilLongBreak && (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={16} color="#FF3B30" />
+                    <Text style={styles.errorText}>Required</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.settingItem}>
+                <View style={styles.switchContainer}>
+                  <View style={styles.switchLabelContainer}>
+                    <Text style={styles.settingLabel}>AI-Aided Active Recall</Text>
+                    <Ionicons name="sparkles" size={16} color="#3478F6" style={{ marginLeft: 4 }} />
+                  </View>
+                  <Switch
+                    value={tempSettings.aiAidedActiveRecall}
+                    onValueChange={(value) => setTempSettings(prev => ({ ...prev, aiAidedActiveRecall: value }))}
+                    trackColor={{ false: "#E5E8EF", true: "#3478F6" }}
+                    thumbColor="#fff"
+                  />
+                </View>
+              </View>
+
+              {tempSettings.aiAidedActiveRecall && (
+                <>
+                  <View style={styles.settingItem}>
+                    <View style={styles.switchContainer}>
+                      <View style={styles.switchLabelContainer}>
+                        <Text style={styles.settingLabel}>Timed Active Recall</Text>
                       </View>
-                      {/* Vertical line below */}
-                      {!isLast && (
-                        <Svg height={40} width={6} style={{ alignSelf: 'center' }}>
-                          <Line
-                            x1={3}
-                            y1={0}
-                            x2={3}
-                            y2={40}
-                            stroke={isCompleted ? '#3478F6' : '#E5E8EF'}
-                            strokeWidth={6}
-                            strokeLinecap="round"
-                          />
-                          {isCurrent && stepProgress > 0 && (
-                            <Line
-                              x1={3}
-                              y1={0}
-                              x2={3}
-                              y2={40 * stepProgress}
-                              stroke="#3478F6"
-                              strokeWidth={6}
-                              strokeLinecap="round"
-                            />
-                          )}
-                        </Svg>
-                      )}
-                    </View>
-                    <View style={styles.timelineLabelCol}>
-                      <Text style={[styles.timelineLabel, isCurrent && styles.timelineLabelCurrent]}>{step.label}</Text>
+                      <Switch
+                        value={tempSettings.activeRecallTimed}
+                        onValueChange={(value) => setTempSettings(prev => ({ ...prev, activeRecallTimed: value }))}
+                        trackColor={{ false: "#E5E8EF", true: "#3478F6" }}
+                        thumbColor="#fff"
+                      />
                     </View>
                   </View>
-                );
-              })}
+
+                  {tempSettings.activeRecallTimed && (
+                    <View style={styles.settingItem}>
+                      <Text style={styles.settingLabel}>Active Recall Duration (minutes)</Text>
+                      <TextInput
+                        style={[styles.settingInput, validationErrors.activeRecallDuration && styles.errorInput]}
+                        value={tempSettings.activeRecallDuration ? tempSettings.activeRecallDuration.toString() : ''}
+                        onChangeText={(text) => {
+                          const value = text === '' ? '' : parseInt(text) || '';
+                          setTempSettings(prev => ({ ...prev, activeRecallDuration: value }));
+                          if (validationErrors.activeRecallDuration) {
+                            setValidationErrors(prev => ({ ...prev, activeRecallDuration: false }));
+                          }
+                        }}
+                        keyboardType="numeric"
+                        placeholder="10"
+                      />
+                      {validationErrors.activeRecallDuration && (
+                        <View style={styles.errorContainer}>
+                          <Ionicons name="alert-circle" size={16} color="#FF3B30" />
+                          <Text style={styles.errorText}>Required</Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
+            </ScrollView>
+            
+            {/* Action Buttons */}
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity style={styles.setDefaultButton} onPress={saveAsDefault}>
+                <Text style={styles.setDefaultButtonText}>Set as Default</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveSettings}>
+                <Text style={styles.saveButtonText}>Save Changes & Reset Cycle</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.statsContainer}>
-              <BlurView intensity={40} tint="light" style={[styles.statBlock, styles.statBlockPurple]}>
-                <View style={[styles.statIconContainer, styles.statIconPurple]}>
-                  <Ionicons name="checkmark-circle-outline" size={24} color="#7B2FF2" />
-                </View>
-                <View style={styles.statContent}>
-                  <Text style={styles.statValue}>{completedPomodoros}</Text>
-                  <Text style={styles.statLabel}>Completed Pomodoros</Text>
-                </View>
-              </BlurView>
-              <BlurView intensity={40} tint="light" style={[styles.statBlock, styles.statBlockTeal]}>
-                <View style={[styles.statIconContainer, styles.statIconTeal]}>
-                  <Ionicons name="time-outline" size={24} color="#00E0B8" />
-                </View>
-                <View style={styles.statContent}>
-                  <Text style={styles.statValue}>{currentPhase.replace(/([A-Z])/g, ' $1').trim().replace(/^./, str => str.toUpperCase())}</Text>
-                  <Text style={styles.statLabel}>Current Phase</Text>
-                </View>
-              </BlurView>
+          </SafeAreaView>
+        </Modal>
+
+        {/* Reset Options Modal */}
+        <Modal
+          visible={showResetOptions}
+          transparent
+          animationType="fade"
+        >
+          <TouchableOpacity style={styles.modalOverlay} onPress={() => setShowResetOptions(false)}>
+            <View style={styles.resetModal}>
+              <Text style={styles.resetModalTitle}>Reset Options</Text>
+              <TouchableOpacity style={styles.resetOption} onPress={resetSession}>
+                <Text style={styles.resetOptionText}>Reset This Session</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.resetOption} onPress={resetCycle}>
+                <Text style={styles.resetOptionText}>Reset Pomodoro Cycle</Text>
+              </TouchableOpacity>
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Progress Modal */}
+        <Modal
+          visible={showProgress}
+          transparent
+          animationType="slide"
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Pomodoro Progress</Text>
+              <TouchableOpacity onPress={() => setShowProgress(false)}>
+                <Ionicons name="close" size={24} color="#6C7A93" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.progressScrollContainer} showsVerticalScrollIndicator={false}>
+              <View style={styles.progressTimelineContainer}>
+                {buildProgressSteps().map((step, idx, arr) => {
+                  const currentIdx = getCurrentStepIndex();
+                  const isCompleted = idx < currentIdx;
+                  const isCurrent = idx === currentIdx;
+                  const isLast = idx === arr.length - 1;
+                  // Progress for the current step (0-1)
+                  let stepProgress = 0;
+                  if (isCurrent) {
+                    stepProgress = fluidProgress;
+                  } else if (isCompleted) {
+                    stepProgress = 1;
+                  }
+                  return (
+                    <View key={step.key} style={styles.timelineRow}>
+                      <View style={styles.timelineIconCol}>
+                        {/* Vertical line above */}
+                        {idx > 0 && (
+                          <Svg height={40} width={6} style={{ alignSelf: 'center' }}>
+                            <Line
+                              x1={3}
+                              y1={0}
+                              x2={3}
+                              y2={40}
+                              stroke={stepProgress > 0 ? '#3478F6' : '#E5E8EF'}
+                              strokeWidth={6}
+                              strokeLinecap="round"
+                            />
+                            {isCurrent && stepProgress > 0 && (
+                              <Line
+                                x1={3}
+                                y1={0}
+                                x2={3}
+                                y2={40 * stepProgress}
+                                stroke="#3478F6"
+                                strokeWidth={6}
+                                strokeLinecap="round"
+                              />
+                            )}
+                          </Svg>
+                        )}
+                        {/* Step icon */}
+                        <View style={[styles.timelineIconWrap, isCurrent && styles.timelineIconCurrentWrap]}>
+                          {isCompleted ? (
+                            <Ionicons name="checkmark-circle" size={28} color="#3478F6" />
+                          ) : isCurrent ? (
+                            <View style={styles.timelineCurrentCircle}>
+                              <Ionicons name="ellipse" size={18} color="#fff" />
+                            </View>
+                          ) : (
+                            <Ionicons name="ellipse-outline" size={28} color="#B0B8C7" />
+                          )}
+                        </View>
+                        {/* Vertical line below */}
+                        {!isLast && (
+                          <Svg height={40} width={6} style={{ alignSelf: 'center' }}>
+                            <Line
+                              x1={3}
+                              y1={0}
+                              x2={3}
+                              y2={40}
+                              stroke={isCompleted ? '#3478F6' : '#E5E8EF'}
+                              strokeWidth={6}
+                              strokeLinecap="round"
+                            />
+                            {isCurrent && stepProgress > 0 && (
+                              <Line
+                                x1={3}
+                                y1={0}
+                                x2={3}
+                                y2={40 * stepProgress}
+                                stroke="#3478F6"
+                                strokeWidth={6}
+                                strokeLinecap="round"
+                              />
+                            )}
+                          </Svg>
+                        )}
+                      </View>
+                      <View style={styles.timelineLabelCol}>
+                        <Text style={[styles.timelineLabel, isCurrent && styles.timelineLabelCurrent]}>{step.label}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+              <View style={styles.statsContainer}>
+                <BlurView intensity={40} tint="light" style={[styles.statBlock, styles.statBlockPurple]}>
+                  <View style={[styles.statIconContainer, styles.statIconPurple]}>
+                    <Ionicons name="checkmark-circle-outline" size={24} color="#7B2FF2" />
+                  </View>
+                  <View style={styles.statContent}>
+                    <Text style={styles.statValue}>{completedPomodoros}</Text>
+                    <Text style={styles.statLabel}>Completed Pomodoros</Text>
+                  </View>
+                </BlurView>
+                <BlurView intensity={40} tint="light" style={[styles.statBlock, styles.statBlockTeal]}>
+                  <View style={[styles.statIconContainer, styles.statIconTeal]}>
+                    <Ionicons name="time-outline" size={24} color="#00E0B8" />
+                  </View>
+                  <View style={styles.statContent}>
+                    <Text style={styles.statValue}>{currentPhase.replace(/([A-Z])/g, ' $1').trim().replace(/^./, str => str.toUpperCase())}</Text>
+                    <Text style={styles.statLabel}>Current Phase</Text>
+                  </View>
+                </BlurView>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FB' },
+  backgroundPattern: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 },
   headerRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', paddingTop: 24, paddingHorizontal: 24 },
   editButton: { padding: 4 },
   centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: -60 },
@@ -1042,4 +1062,7 @@ const styles = StyleSheet.create({
   statContent: { flex: 1 },
   statValue: { fontSize: 20, fontWeight: 'bold', color: '#222', marginBottom: 2 },
   statLabel: { fontSize: 15, color: '#6C7A93' },
+  backgroundImage: { flex: 1, width: '100%', height: '100%' },
+  backgroundOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: '#F8F9FB', opacity: 0.7, zIndex: 1 },
+  textureGrid: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', zIndex: -1, flexDirection: 'column' },
 }); 
