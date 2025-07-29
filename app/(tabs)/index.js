@@ -1,56 +1,305 @@
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { useNavigation } from '@react-navigation/native';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import {
+  ActivityIndicator, Alert,
+  ScrollView,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View
+} from 'react-native';
+import { auth } from '../../config/firebase';
 
-const tracks = [
-  { title: 'Deep Focus', artist: 'Ambient Collective', duration: '3:45' },
-  { title: 'Productivity Flow', artist: 'Study Sounds', duration: '4:12' },
-  { title: 'Calm Waters', artist: 'Nature Sounds', duration: '2:58' },
-];
+export default function AuthPage() {
+  const navigation = useNavigation();
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
 
-export default function MusicScreen() {
+  const [user, loading, error] = useAuthState(auth);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [mode, setMode] = useState('login');
+
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      navigation.replace('Drawer');
+    }
+  }, [user]);
+
+  const handleLogin = async () => {
+    if (!loginEmail || !loginPassword) {
+      return Alert.alert('Error', 'Please fill all fields.');
+    }
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      Alert.alert('Login Failed', error.message);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!registerName || !registerEmail || !registerPassword) {
+      return Alert.alert('Error', 'Please fill all fields.');
+    }
+    setIsLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, registerEmail, registerPassword);
+      await updateProfile(userCredential.user, {
+        displayName: registerName,
+      });
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      Alert.alert('Registration Failed', error.message);
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Music</Text>
-      <Text style={styles.subheader}>Focus sounds and break music</Text>
-      <View style={styles.segmentedControl}>
-        <TouchableOpacity style={[styles.segment, styles.segmentActive]}><Ionicons name="headset" size={18} color="#fff" /><Text style={styles.segmentTextActive}> Focus</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.segment}><Ionicons name="cafe-outline" size={18} color="#6C7A93" /><Text style={styles.segmentText}> Break</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.segment}><Ionicons name="leaf-outline" size={18} color="#6C7A93" /><Text style={styles.segmentText}> Ambient</Text></TouchableOpacity>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        isDarkMode && { backgroundColor: '#121212' },
+      ]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.iconContainer}>
+        <View style={styles.iconCircle}>
+          <Text style={styles.icon}>🛡️</Text>
+        </View>
       </View>
-      <FlatList
-        data={tracks}
-        keyExtractor={item => item.title}
-        renderItem={({ item }) => (
-          <View style={styles.trackItem}>
-            <Ionicons name="play" size={28} color="#6C7A93" style={styles.trackIcon} />
-            <View style={styles.trackInfo}>
-              <Text style={styles.trackTitle}>{item.title}</Text>
-              <Text style={styles.trackArtist}>{item.artist}</Text>
-            </View>
-            <Text style={styles.trackDuration}>{item.duration}</Text>
-          </View>
-        )}
-        style={styles.trackList}
-      />
-    </SafeAreaView>
+      <Text style={[styles.title, isDarkMode && { color: '#fff' }]}>
+        Welcome to Intelliger
+      </Text>
+
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          onPress={() => setMode('login')}
+          style={[styles.tab, mode === 'login' && styles.activeTabBackground]}
+        >
+          <Text style={[styles.tabText, mode === 'login' && styles.activeTabText]}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setMode('register')}
+          style={[styles.tab, mode === 'register' && styles.activeTabBackground]}
+        >
+          <Text style={[styles.tabText, mode === 'register' && styles.activeTabText]}>Register</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Forms */}
+      {mode === 'login' ? (
+        <View style={styles.form}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            placeholder="name@example.com"
+            style={styles.input}
+            value={loginEmail}
+            onChangeText={setLoginEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            placeholder="••••••••"
+            secureTextEntry
+            style={styles.input}
+            value={loginPassword}
+            onChangeText={setLoginPassword}
+          />
+          <TouchableOpacity style={styles.forgotPassword}>
+            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={isLoading}>
+            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign in</Text>}
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.form}>
+          <Text style={styles.label}>Full Name</Text>
+          <TextInput
+            placeholder="John Doe"
+            style={styles.input}
+            value={registerName}
+            onChangeText={setRegisterName}
+          />
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            placeholder="name@example.com"
+            style={styles.input}
+            value={registerEmail}
+            onChangeText={setRegisterEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            placeholder="••••••••"
+            secureTextEntry
+            style={styles.input}
+            value={registerPassword}
+            onChangeText={setRegisterPassword}
+          />
+          <TouchableOpacity onPress={handleRegister} style={styles.button} disabled={isLoading}>
+            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create account</Text>}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* OAuth Buttons */}
+      <OAuthButtons />
+
+      <TouchableOpacity>
+        <Text style={styles.privacyPolicy}>Privacy Policy.</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
+function OAuthButtons() {
+  return (
+    <View style={{ marginTop: 16 }}>
+      <View style={{ alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ fontSize: 12, color: '#6c757d' }}>Or continue with</Text>
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+        <TouchableOpacity style={styles.oauthButton} onPress={() => alert('Facebook login coming soon')}>
+          <Text style={styles.oauthButtonText}>Facebook</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.oauthButton} onPress={() => alert('Google login coming soon')}>
+          <Text style={styles.oauthButtonText}>Google</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FB', paddingHorizontal: 0 },
-  header: { fontSize: 28, fontWeight: 'bold', color: '#222', marginTop: 24, marginLeft: 24 },
-  subheader: { fontSize: 16, color: '#6C7A93', marginBottom: 18, marginLeft: 24 },
-  segmentedControl: { flexDirection: 'row', marginHorizontal: 24, marginBottom: 18 },
-  segment: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, borderRadius: 8, backgroundColor: '#E5E8EF', marginHorizontal: 2 },
-  segmentActive: { backgroundColor: '#3478F6' },
-  segmentText: { color: '#6C7A93', fontWeight: 'bold', fontSize: 16 },
-  segmentTextActive: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  trackList: { marginHorizontal: 0 },
-  trackItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, marginHorizontal: 24, marginBottom: 12, padding: 16, elevation: 1 },
-  trackIcon: { marginRight: 16 },
-  trackInfo: { flex: 1 },
-  trackTitle: { fontSize: 16, fontWeight: 'bold', color: '#222' },
-  trackArtist: { fontSize: 14, color: '#6C7A93' },
-  trackDuration: { fontSize: 14, color: '#6C7A93', fontWeight: 'bold' },
-}); 
+  container: {
+    padding: 24,
+    paddingTop: 60,
+    backgroundColor: '#fff',
+    minHeight: '100%',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  iconCircle: {
+    backgroundColor: '#e6f0ff',
+    padding: 12,
+    borderRadius: 999,
+  },
+  icon: {
+    fontSize: 32,
+    color: '#007bff',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 24,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  activeTabBackground: {
+    backgroundColor: '#e6f0ff',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#6c757d',
+    fontWeight: '600',
+  },
+  activeTabText: {
+    color: '#007bff',
+  },
+  label: {
+    marginBottom: 6,
+    fontWeight: '500',
+    color: '#212529',
+  },
+  form: {
+    marginBottom: 30,
+  },
+  input: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    fontSize: 16,
+  },
+  forgotPassword: {
+    alignItems: 'flex-end',
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: '#007bff',
+    fontSize: 13,
+  },
+  button: {
+    backgroundColor: '#cce0ff',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#007bff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  oauthButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    flex: 1,
+    alignItems: 'center',
+  },
+  oauthButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#343a40',
+  },
+  updateText: {
+    marginTop: 16,
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#6c757d',
+  },
+  privacyPolicy: {
+    textAlign: 'center',
+    marginTop: 4,
+    fontSize: 12,
+    color: '#007bff',
+    textDecorationLine: 'underline',
+  },
+});

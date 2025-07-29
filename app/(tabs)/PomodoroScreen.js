@@ -831,6 +831,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
     position: 'relative',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   timerCircleWrap: {
     width: 260,
@@ -844,6 +846,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 6,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   timerSvg: {
     position: 'absolute',
