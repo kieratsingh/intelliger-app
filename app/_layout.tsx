@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React from 'react';
 import { tasksContext } from './(tabs)/tasksContext';
+import { AnalyticsProvider } from './(tabs)/analyticsContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -23,14 +24,16 @@ export default function RootLayout() {
   }
 
   return (
-    <tasksContext.Provider value={{ tasks, setTasks }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </tasksContext.Provider>
+    <AnalyticsProvider>
+      <tasksContext.Provider value={{ tasks, setTasks }}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </tasksContext.Provider>
+    </AnalyticsProvider>
   );
 }

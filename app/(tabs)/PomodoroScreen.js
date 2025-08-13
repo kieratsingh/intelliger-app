@@ -18,6 +18,7 @@ import {
 import ConfettiCannon from 'react-native-confetti-cannon';
 import Svg, { Circle, Defs, G, Line, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
 import { tasksContext } from './tasksContext';
+import { useAnalytics } from './analyticsContext';
 
 export default function PomodoroScreen() {
   // Timer settings state
@@ -53,6 +54,7 @@ export default function PomodoroScreen() {
   const lastSecond = useRef(currentTime);
   const { tasks = [] } = React.useContext(tasksContext) || {};
   const [selectedTitle, setSelectedTitle] = useState('Work Time');
+  const { recordSession } = useAnalytics();
 
   // Load default settings on app start
   useEffect(() => {
@@ -192,6 +194,11 @@ export default function PomodoroScreen() {
 
   const handlePhaseComplete = () => {
     setIsRunning(false); // Always pause on new phase
+    
+    // Record the completed session
+    const sessionDuration = getPhaseDuration() / 60; // Convert to minutes
+    recordSession(currentPhase, sessionDuration, true);
+    
     if (currentPhase === 'pomodoro') {
       const newPomodoroCount = pomodoroCount + 1;
       setPomodoroCount(newPomodoroCount);

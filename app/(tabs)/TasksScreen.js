@@ -28,6 +28,7 @@ import {
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { db } from '../../config/firebase';
+import { useAnalytics } from './analyticsContext';
 
 export default function TasksScreen() {
   const [taskInput, setTaskInput] = useState('');
@@ -40,6 +41,8 @@ export default function TasksScreen() {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showReminderPicker, setShowReminderPicker] = useState(false);
+  
+  const { updateTaskData } = useAnalytics();
 
   useEffect(() => {
     const q =
@@ -87,6 +90,12 @@ export default function TasksScreen() {
     const ref = doc(db, 'tasks', task.id);
     await updateDoc(ref, { completed: !task.completed });
   };
+
+  // Update analytics when tasks change
+  useEffect(() => {
+    const completedTasks = tasks.filter(task => task.completed).length;
+    updateTaskData(tasks.length, completedTasks);
+  }, [tasks, updateTaskData]);
 
   const deleteTask = async (taskId) => {
     const ref = doc(db, 'tasks', taskId);
