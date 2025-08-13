@@ -3,22 +3,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
-  Image,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Image,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import Svg, { Circle, Defs, G, Line, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
-import { tasksContext } from './tasksContext';
 import { useAnalytics } from './analyticsContext';
+import { tasksContext } from './tasksContext';
 
 export default function PomodoroScreen() {
   // Timer settings state

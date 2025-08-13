@@ -3,28 +3,28 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import Checkbox from 'expo-checkbox';
 import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  Timestamp,
-  updateDoc,
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    orderBy,
+    query,
+    Timestamp,
+    updateDoc,
 } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { db } from '../../config/firebase';
