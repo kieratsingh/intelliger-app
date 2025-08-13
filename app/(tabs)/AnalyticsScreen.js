@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAnalytics } from './analyticsContext';
 import { tasksContext } from './tasksContext';
 
 export default function AnalyticsScreen() {
-  const { sessionData, taskData, getInsights, updateTaskData } = useAnalytics();
+  const { sessionData, taskData, getInsights, updateTaskData, resetAllData } = useAnalytics();
   const { tasks = [] } = React.useContext(tasksContext) || {};
 
   // Update task data when tasks change
@@ -30,11 +30,23 @@ export default function AnalyticsScreen() {
   // Get insights
   const insights = getInsights();
 
+  const handleReset = () => {
+    resetAllData();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.header}>Analytics</Text>
-        <Text style={styles.subheader}>Your productivity overview</Text>
+        <View style={styles.headerContainer}>
+          <View>
+            <Text style={styles.header}>Analytics</Text>
+            <Text style={styles.subheader}>Your productivity overview</Text>
+          </View>
+          <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+            <Ionicons name="refresh-outline" size={20} color="#6C7A93" />
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
         
         <Text style={styles.sectionTitle}>Pomodoro Statistics</Text>
         <View style={styles.statsRow}>
@@ -147,8 +159,26 @@ export default function AnalyticsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FB' },
   scrollContent: { paddingBottom: 32 },
-  header: { fontSize: 28, fontWeight: 'bold', color: '#222', marginTop: 24, marginLeft: 24 },
-  subheader: { fontSize: 16, color: '#6C7A93', marginBottom: 18, marginLeft: 24 },
+  headerContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-start', 
+    marginTop: 24, 
+    marginHorizontal: 24 
+  },
+  header: { fontSize: 28, fontWeight: 'bold', color: '#222' },
+  subheader: { fontSize: 16, color: '#6C7A93', marginBottom: 18 },
+  resetButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#fff', 
+    paddingHorizontal: 12, 
+    paddingVertical: 8, 
+    borderRadius: 8, 
+    borderWidth: 1, 
+    borderColor: '#E5E8EF' 
+  },
+  resetButtonText: { fontSize: 14, color: '#6C7A93', marginLeft: 4 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#222', marginTop: 24, marginBottom: 12, marginLeft: 24 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 24, marginBottom: 12 },
   statBox: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 16, marginHorizontal: 4, alignItems: 'center', elevation: 1 },

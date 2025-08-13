@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export const AnalyticsContext = createContext();
 
@@ -67,7 +67,6 @@ export const AnalyticsProvider = ({ children }) => {
   // Update session data when a Pomodoro session is completed
   const recordSession = (sessionType, duration, isCompleted = true) => {
     const today = new Date().toDateString();
-    const now = new Date();
     
     setSessionData(prev => {
       const newData = { ...prev };
@@ -122,8 +121,6 @@ export const AnalyticsProvider = ({ children }) => {
 
   // Update task data
   const updateTaskData = (totalTasks, completedTasks) => {
-    const today = new Date().toDateString();
-    
     setTaskData(prev => {
       const newData = { ...prev };
       newData.totalTasks = totalTasks;
@@ -156,6 +153,41 @@ export const AnalyticsProvider = ({ children }) => {
     }));
     
     saveAnalyticsData();
+  };
+
+  // Reset all analytics data (for testing/demo purposes)
+  const resetAllData = async () => {
+    const initialSessionData = {
+      totalSessions: 0,
+      totalFocusTime: 0,
+      totalBreakTime: 0,
+      totalLongBreakTime: 0,
+      totalActiveRecallTime: 0,
+      completedCycles: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      todaySessions: 0,
+      todayFocusTime: 0,
+      weeklyData: [],
+    };
+
+    const initialTaskData = {
+      totalTasks: 0,
+      completedTasks: 0,
+      todayTasks: 0,
+      todayCompletedTasks: 0,
+      completionRate: 0,
+    };
+
+    setSessionData(initialSessionData);
+    setTaskData(initialTaskData);
+    
+    try {
+      await AsyncStorage.removeItem('analyticsSessionData');
+      await AsyncStorage.removeItem('analyticsTaskData');
+    } catch (error) {
+      console.log('Error resetting analytics data:', error);
+    }
   };
 
   // Get insights based on current data
@@ -241,6 +273,7 @@ export const AnalyticsProvider = ({ children }) => {
     recordSession,
     updateTaskData,
     resetDailyData,
+    resetAllData,
     getInsights,
   };
 
