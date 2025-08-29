@@ -110,11 +110,8 @@ export default function PomodoroScreen() {
 
     setValidationErrors({});
     setSettings(tempSettings);
-    setIsRunning(false); // Pause on new session
-    setCurrentTime(tempSettings.pomodoroDuration * 60);
-    setCurrentPhase('pomodoro');
-    setPomodoroCount(0);
-    setCompletedPomodoros(0);
+    // Do not reset the cycle or time; just apply settings and close
+    setIsRunning(false);
     setShowSettings(false);
   };
 
@@ -456,7 +453,6 @@ export default function PomodoroScreen() {
                       strokeDasharray={CIRCUMFERENCE}
                       strokeDashoffset={progressStrokeDashoffset}
                       strokeLinecap="round"
-                      style={{ shadowColor: '#7B2FF2', shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 }}
                     />
                   </G>
                 </Svg>
@@ -501,9 +497,10 @@ export default function PomodoroScreen() {
         <Modal
           visible={showSettings}
           animationType="slide"
-          presentationStyle="pageSheet"
+          transparent={true}
         >
-          <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalOverlay}>
+            <SafeAreaView style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Timer Settings</Text>
               <TouchableOpacity onPress={() => setShowSettings(false)}>
@@ -669,10 +666,11 @@ export default function PomodoroScreen() {
                 <Text style={styles.setDefaultButtonText}>Set as Default</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveButton} onPress={handleSaveSettings}>
-                <Text style={styles.saveButtonText}>Save Changes & Reset Cycle</Text>
+                <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
+          </View>
         </Modal>
 
         {/* Reset Options Modal */}
@@ -825,8 +823,8 @@ export default function PomodoroScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FB' },
   backgroundPattern: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 },
-  headerRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', paddingTop: 24, paddingHorizontal: 24 },
-  editButton: { padding: 4 },
+  headerRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', paddingTop: 16, paddingHorizontal: 16 },
+  editButton: { padding: 4, marginRight: 6, marginTop: -6 },
   centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: -60 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#222', marginBottom: 4 },
   subtitle: { fontSize: 16, color: '#6C7A93', marginBottom: 18 },
@@ -848,13 +846,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 6,
     backgroundColor: 'transparent',
     borderWidth: 0,
+    borderRadius: 130,
+    // extremely subtle outside-only shadow on iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    // avoid Android rectangular elevation shadow
+    elevation: 0,
+    overflow: 'visible',
   },
   timerSvg: {
     position: 'absolute',
@@ -878,11 +880,25 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 16, color: '#6C7A93', textAlign: 'center' },
   
   // Modal Styles
-  modalContainer: { flex: 1, backgroundColor: '#F8F9FB' },
+  modalContainer: { 
+    flex: 1, 
+    backgroundColor: '#F8F9FB',
+    margin: 20,
+    borderRadius: 12,
+    maxWidth: 500,
+    maxHeight: '80%',
+    alignSelf: 'center'
+  },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, borderBottomWidth: 1, borderBottomColor: '#E5E8EF' },
   modalTitle: { fontSize: 24, fontWeight: 'bold', color: '#222' },
   modalContent: { flex: 1, padding: 24 },
-  modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalOverlay: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 20
+  },
   
   // Settings Styles
   settingItem: { marginBottom: 24 },

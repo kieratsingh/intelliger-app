@@ -8,10 +8,12 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "server": "node backend/server.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@google/genai": "^1.15.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "^8.4.3",
     "@react-native-firebase/app": "^22.4.0",
@@ -22,6 +24,8 @@
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/stack": "^7.4.4",
     "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
     "expo": "~53.0.20",
     "expo-av": "^15.1.7",
     "expo-blur": "~14.1.5",
@@ -39,6 +43,7 @@
     "expo-symbols": "~0.4.5",
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "~14.2.0",
+    "express": "^4.19.2",
     "install": "^0.13.0",
     "npm": "^11.5.1",
     "npx": "^10.2.2",
