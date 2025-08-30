@@ -1,15 +1,20 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import {
-  ActivityIndicator, Alert,
+  ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
-  Text, TextInput, TouchableOpacity,
-  View
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { auth } from '../../config/firebase';
 
 export default function AuthPage() {
@@ -17,8 +22,7 @@ export default function AuthPage() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
-  const [user, loading, error] = useAuthState(auth);
-
+  const [user, loading] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState('login');
 
@@ -35,24 +39,38 @@ export default function AuthPage() {
     }
   }, [user]);
 
+  // ✅ Validation helper
+  const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
+
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) {
-      return Alert.alert('Error', 'Please fill all fields.');
+      return Toast.show({ type: 'error', text1: 'Please fill all fields' });
+    }
+    if (!validateEmail(loginEmail)) {
+      return Toast.show({ type: 'error', text1: 'Enter a valid email' });
     }
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
       setIsLoading(false);
+      Toast.show({ type: 'success', text1: 'Login Successful' });
     } catch (error) {
       setIsLoading(false);
-      Alert.alert('Login Failed', error.message);
+      Toast.show({ type: 'error', text1: 'Login Failed', text2: error.message });
     }
   };
 
   const handleRegister = async () => {
     if (!registerName || !registerEmail || !registerPassword) {
-      return Alert.alert('Error', 'Please fill all fields.');
+      return Toast.show({ type: 'error', text1: 'Please fill all fields' });
     }
+    if (!validateEmail(registerEmail)) {
+      return Toast.show({ type: 'error', text1: 'Enter a valid email' });
+    }
+    if (registerPassword.length < 6) {
+      return Toast.show({ type: 'error', text1: 'Password must be at least 6 characters' });
+    }
+
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, registerEmail, registerPassword);
@@ -60,246 +78,250 @@ export default function AuthPage() {
         displayName: registerName,
       });
       setIsLoading(false);
+      Toast.show({ type: 'success', text1: 'Account Created Successfully' });
     } catch (error) {
       setIsLoading(false);
-      Alert.alert('Registration Failed', error.message);
+      Toast.show({ type: 'error', text1: 'Registration Failed', text2: error.message });
     }
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        isDarkMode && { backgroundColor: '#121212' },
-      ]}
-      keyboardShouldPersistTaps="handled"
+    <LinearGradient
+      colors={['#4c6ef5', '#7950f2']}
+      style={styles.gradientBackground}
     >
-      <View style={styles.iconContainer}>
-        <View style={styles.iconCircle}>
-          <Text style={styles.icon}>🛡️</Text>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* ✅ Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Welcome to Intelliger</Text>
         </View>
-      </View>
-      <Text style={[styles.title, isDarkMode && { color: '#fff' }]}>
-        Welcome to Intelliger
-      </Text>
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          onPress={() => setMode('login')}
-          style={[styles.tab, mode === 'login' && styles.activeTabBackground]}
-        >
-          <Text style={[styles.tabText, mode === 'login' && styles.activeTabText]}>Login</Text>
+        {/* ✅ Card Form */}
+        <View style={styles.card}>
+          {/* Tabs */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              onPress={() => setMode('login')}
+              style={[styles.tab, mode === 'login' && styles.activeTab]}
+            >
+              <Text style={[styles.tabText, mode === 'login' && styles.activeTabText]}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setMode('register')}
+              style={[styles.tab, mode === 'register' && styles.activeTab]}
+            >
+              <Text style={[styles.tabText, mode === 'register' && styles.activeTabText]}>Register</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Forms */}
+          {mode === 'login' ? (
+            <View style={styles.form}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                placeholder="name@example.com"
+                style={styles.input}
+                value={loginEmail}
+                onChangeText={setLoginEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                placeholder="••••••••"
+                secureTextEntry
+                style={styles.input}
+                value={loginPassword}
+                onChangeText={setLoginPassword}
+              />
+              <TouchableOpacity style={styles.forgotPassword}>
+                <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={isLoading}>
+                <LinearGradient
+                  colors={['#4c6ef5', '#7950f2']}
+                  style={styles.buttonGradient}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Sign in</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.form}>
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                placeholder="John Doe"
+                style={styles.input}
+                value={registerName}
+                onChangeText={setRegisterName}
+              />
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                placeholder="name@example.com"
+                style={styles.input}
+                value={registerEmail}
+                onChangeText={setRegisterEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                placeholder="••••••••"
+                secureTextEntry
+                style={styles.input}
+                value={registerPassword}
+                onChangeText={setRegisterPassword}
+              />
+              <TouchableOpacity onPress={handleRegister} style={styles.button} disabled={isLoading}>
+                <LinearGradient
+                  colors={['#4c6ef5', '#7950f2']}
+                  style={styles.buttonGradient}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Create account</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        <TouchableOpacity>
+          <Text style={styles.privacyPolicy}>Privacy Policy</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setMode('register')}
-          style={[styles.tab, mode === 'register' && styles.activeTabBackground]}
-        >
-          <Text style={[styles.tabText, mode === 'register' && styles.activeTabText]}>Register</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Forms */}
-      {mode === 'login' ? (
-        <View style={styles.form}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            placeholder="name@example.com"
-            style={styles.input}
-            value={loginEmail}
-            onChangeText={setLoginEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            placeholder="••••••••"
-            secureTextEntry
-            style={styles.input}
-            value={loginPassword}
-            onChangeText={setLoginPassword}
-          />
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={isLoading}>
-            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign in</Text>}
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.form}>
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            placeholder="John Doe"
-            style={styles.input}
-            value={registerName}
-            onChangeText={setRegisterName}
-          />
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            placeholder="name@example.com"
-            style={styles.input}
-            value={registerEmail}
-            onChangeText={setRegisterEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            placeholder="••••••••"
-            secureTextEntry
-            style={styles.input}
-            value={registerPassword}
-            onChangeText={setRegisterPassword}
-          />
-          <TouchableOpacity onPress={handleRegister} style={styles.button} disabled={isLoading}>
-            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create account</Text>}
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* OAuth Buttons */}
-      <OAuthButtons />
-
-      <TouchableOpacity>
-        <Text style={styles.privacyPolicy}>Privacy Policy.</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <Toast />
+      </ScrollView>
+    </LinearGradient>
   );
 }
-
-function OAuthButtons() {
-  return (
-    <View style={{ marginTop: 16 }}>
-      <View style={{ alignItems: 'center', marginBottom: 12 }}>
-        <Text style={{ fontSize: 12, color: '#6c757d' }}>Or continue with</Text>
-      </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-        <TouchableOpacity style={styles.oauthButton} onPress={() => alert('Facebook login coming soon')}>
-          <Text style={styles.oauthButtonText}>Facebook</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.oauthButton} onPress={() => alert('Google login coming soon')}>
-          <Text style={styles.oauthButtonText}>Google</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    paddingTop: 60,
-    backgroundColor: '#fff',
-    minHeight: '100%',
+  gradientBackground: {
+    flex: 1,
   },
-  iconContainer: {
+  container: {
+    flexGrow: 1,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
     alignItems: 'center',
     marginBottom: 16,
   },
-  iconCircle: {
-    backgroundColor: '#e6f0ff',
-    padding: 12,
-    borderRadius: 999,
-  },
-  icon: {
-    fontSize: 32,
-    color: '#007bff',
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
+    color: '#fff',
     textAlign: 'center',
-    marginBottom: 30,
   },
-  
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    marginVertical: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 5,
+  },
   tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 24,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 12,
+    marginBottom: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   tab: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
   },
-  activeTabBackground: {
-    backgroundColor: '#e6f0ff',
+  activeTab: {
+    backgroundColor: '#e6e9ff',
   },
   tabText: {
     fontSize: 16,
-    color: '#6c757d',
     fontWeight: '600',
+    color: '#6c757d',
   },
   activeTabText: {
-    color: '#007bff',
+    color: '#4c6ef5',
+  },
+  form: {
+    marginBottom: 20,
   },
   label: {
     marginBottom: 6,
     fontWeight: '500',
     color: '#212529',
   },
-  form: {
-    marginBottom: 30,
-  },
   input: {
     backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#ced4da',
     fontSize: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
   },
   forgotPassword: {
     alignItems: 'flex-end',
     marginBottom: 16,
   },
   forgotPasswordText: {
-    color: '#007bff',
+    color: '#4c6ef5',
     fontSize: 13,
   },
   button: {
-    backgroundColor: '#cce0ff',
-    padding: 14,
-    borderRadius: 8,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#007bff',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
-  oauthButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    flex: 1,
-    alignItems: 'center',
-  },
-  oauthButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#343a40',
-  },
-  updateText: {
-    marginTop: 16,
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#6c757d',
-  },
   privacyPolicy: {
     textAlign: 'center',
-    marginTop: 4,
-    fontSize: 12,
-    color: '#007bff',
+    marginTop: 10,
+    fontSize: 13,
+    color: '#fff',
     textDecorationLine: 'underline',
   },
 });
